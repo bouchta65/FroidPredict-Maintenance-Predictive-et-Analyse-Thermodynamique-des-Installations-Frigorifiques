@@ -19,9 +19,10 @@ FroidPredict est une application web innovante dédiée à la maintenance prédi
 - **Data Science/ML** : scikit-learn, pandas, numpy
 - **Déploiement** : Docker, scripts de simulation de données
 
-## 🎯 Objectif
+🎯 Objectif
 
 Permettre aux industriels de :
+
 - Prédire les défaillances avant qu’elles ne surviennent
 - Optimiser la performance énergétique des installations
 - Réduire les coûts de maintenance et les pertes opérationnelles
