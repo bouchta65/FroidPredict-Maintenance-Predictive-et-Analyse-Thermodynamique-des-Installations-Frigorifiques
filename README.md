@@ -6,19 +6,20 @@ Ce projet implémente un système de maintenance prédictive en temps réel pour
 
 ## 🌟 Fonctionnalités clés
 
-✅ **Surveillance en temps réel** - Monitoring continu des paramètres thermodynamiques  
-✅ **Prédiction IA** - Modèles ML pour anticiper les défaillances  
-✅ **Interface moderne** - Dashboard interactif avec mises à jour en temps réel  
-✅ **Alertes intelligentes** - Notifications automatiques basées sur les seuils critiques  
-✅ **Containerisation** - Déploiement facile avec Docker Compose  
-✅ **Architecture scalable** - Kafka pour le streaming haute performance  
-✅ **Analyse thermodynamique** - Calculs automatiques des indicateurs de performance  
+✅ **Surveillance en temps réel** - Monitoring continu des paramètres thermodynamiques
+✅ **Prédiction IA** - Modèles ML pour anticiper les défaillances
+✅ **Interface moderne** - Dashboard interactif avec mises à jour en temps réel
+✅ **Alertes intelligentes** - Notifications automatiques basées sur les seuils critiques
+✅ **Containerisation** - Déploiement facile avec Docker Compose
+✅ **Architecture scalable** - Kafka pour le streaming haute performance
+✅ **Analyse thermodynamique** - Calculs automatiques des indicateurs de performance
 
 ## 🎯 Vue d'ensemble du projet
 
 Le système surveille en temps réel les paramètres critiques des installations frigorifiques (températures, pressions, surchauffe, sous-refroidissement, consommation électrique, vibrations) et utilise des algorithmes d'apprentissage automatique pour prédire les défaillances avant qu'elles ne se produisent.
 
 **Avantages** :
+
 - 🔍 **Détection précoce** des anomalies
 - 💰 **Réduction des coûts** de maintenance
 - ⚡ **Optimisation énergétique** des installations
@@ -28,19 +29,22 @@ Le système surveille en temps réel les paramètres critiques des installations
 ## 📸 Aperçu du tableau de bord
 
 ### Dashboard Principal
+
 ![Dashboard Principal](./screenshots/dashboard-main.svg)
 *Vue d'ensemble du tableau de bord avec monitoring temps réel*
 
 ### Alertes et Notifications
+
 ![Alertes](./screenshots/alerts-page.svg)
 *Page des alertes avec historique des événements*
 
 ### Prédictions ML
+
 ![Prédictions](./screenshots/predictions-page.svg)
 *Historique des prédictions avec scores de confiance*
 
 > 📝 **Note** : Les images ci-dessus sont des exemples visuels. Pour voir le vrai tableau de bord, démarrez l'application avec `.\run_all_services.bat` et allez sur http://localhost:5001
-> 
+>
 > 🔄 **Mise à jour** : Pour remplacer ces exemples par de vraies captures d'écran, suivez les instructions dans le dossier `screenshots/`
 
 ### Fonctionnalités principales
@@ -56,23 +60,27 @@ Le système surveille en temps réel les paramètres critiques des installations
 ## 🛠️ Technologies utilisées
 
 ### Backend & Services
+
 - **Flask** + **Flask-SocketIO** - Framework web Python avec WebSocket
 - **Apache Kafka** - Streaming de données en temps réel
 - **MongoDB** - Base de données NoSQL pour stockage
 - **Docker** + **Docker Compose** - Containerisation et orchestration
 
 ### Machine Learning & Données
+
 - **scikit-learn** - Algorithmes ML (Régression logistique, Random Forest)
 - **pandas** + **NumPy** - Manipulation et analyse des données
 - **PySpark** - Traitement distribué des données (optionnel)
 
 ### Frontend & Interface
+
 - **Bootstrap 5** - Framework CSS moderne et responsive
 - **Chart.js** - Graphiques interactifs et animations
 - **Socket.IO** - Communication bidirectionnelle en temps réel
 - **HTML5** + **CSS3** + **JavaScript ES6+**
 
 ### Outils de développement
+
 - **Python 3.8+** - Langage principal
 - **Git** - Contrôle de version
 - **VS Code** - IDE recommandé
@@ -162,26 +170,27 @@ Le système surveille en temps réel les paramètres critiques des installations
 Si vous préférez contrôler chaque étape :
 
 1. **Démarrer les services Docker** :
+
    ```powershell
    docker-compose up -d
    ```
-
 2. **Attendre que les services se lancent** (15 secondes) :
+
    ```powershell
    Start-Sleep -Seconds 15
    ```
-
 3. **Démarrer l'application Flask** :
+
    ```powershell
    python app.py
    ```
-
 4. **Démarrer le producteur Kafka** (nouveau terminal) :
+
    ```powershell
    python kafka_producer.py
    ```
-
 5. **Démarrer le service de prédiction** (nouveau terminal) :
+
    ```powershell
    python streamingpredict.py
    ```
@@ -198,11 +207,13 @@ Si vous préférez contrôler chaque étape :
 ### ✅ Vérification automatique des prérequis
 
 Utilisez le script de vérification automatique :
+
 ```powershell
 .\check_prerequisites.ps1
 ```
 
 Ce script vérifie :
+
 - ✅ Installation de Python
 - ✅ Installation de Docker
 - ✅ Docker en cours d'exécution
@@ -212,18 +223,21 @@ Ce script vérifie :
 ### Étapes d'installation détaillées
 
 #### 1. Cloner le dépôt
+
 ```powershell
 git clone <repository_url>
 cd Syst-me-Pr-dictif-de-Maintenance-Industrielle
 ```
 
 #### 2. Installer les dépendances Python
+
 ```powershell
 # Installer les dépendances
 pip install -r requirements.txt
 ```
 
 #### 3. Vérifier l'installation de Docker
+
 ```powershell
 # Vérifier que Docker est installé et en cours d'exécution
 docker --version
@@ -233,6 +247,7 @@ docker-compose --version
 ```
 
 #### 4. Nettoyer les anciens containers (si nécessaire)
+
 ```powershell
 # Nettoyer les anciens containers
 docker rm -f zookeeper kafka mongodb mongo-express kafka-ui
@@ -240,6 +255,7 @@ docker-compose down
 ```
 
 #### 5. Démarrer l'infrastructure Docker
+
 ```powershell
 # Démarrer tous les services Docker en arrière-plan
 docker-compose up -d
@@ -249,6 +265,7 @@ docker-compose ps
 ```
 
 Les services suivants seront démarrés :
+
 - **Zookeeper** (port 2181) : Service de coordination pour Kafka
 - **Kafka** (port 9092) : Plateforme de streaming distribué
 - **MongoDB** (port 27017) : Base de données NoSQL
@@ -256,17 +273,20 @@ Les services suivants seront démarrés :
 - **Mongo Express** (port 8081) : Interface web pour MongoDB
 
 #### 6. Vérifier que les services sont opérationnels
+
 ```powershell
 # Tester la connectivité du système
 python test_system.py
 ```
 
 Vous pouvez aussi vérifier manuellement :
+
 - **Kafka UI** : http://localhost:8080
 - **MongoDB Express** : http://localhost:8081 (utilisateur : admin, mot de passe : admin)
 - **MongoDB** : Connexion sur `mongodb://localhost:27017`
 
 #### 7. Le modèle de Machine Learning sera créé automatiquement
+
 Le modèle est créé automatiquement au premier démarrage si il n'existe pas.
 
 ## 🎯 Utilisation de l'application
@@ -278,16 +298,17 @@ Une fois l'installation terminée, utilisez les nouvelles méthodes simplifiées
 #### 🚀 Méthode recommandée : Scripts PowerShell automatiques
 
 1. **Démarrer tous les services** :
+
    ```powershell
    .\run_all_services.ps1
    ```
-
 2. **Vérifier le statut** :
+
    ```powershell
    .\check_services_status.ps1
    ```
-
 3. **Arrêter tous les services** :
+
    ```powershell
    .\stop_all_services.bat
    ```
@@ -297,31 +318,32 @@ Une fois l'installation terminée, utilisez les nouvelles méthodes simplifiées
 Si vous voulez contrôler chaque service individuellement :
 
 1. **Démarrer les services Docker** :
+
    ```powershell
    docker-compose up -d
    ```
-
 2. **Attendre que les services se lancent** (15 secondes) :
+
    ```powershell
    Start-Sleep -Seconds 15
    ```
-
 3. **Démarrer l'application web Flask** :
+
    ```powershell
    python app.py
    ```
-
 4. **Démarrer le producteur Kafka** dans un nouveau terminal :
+
    ```powershell
    python kafka_producer.py
    ```
-
 5. **Démarrer le service de prédiction** dans un nouveau terminal :
+
    ```powershell
    python streamingpredict.py
    ```
-
 6. **Optionnel - Surveiller les messages Kafka** dans un nouveau terminal :
+
    ```powershell
    python kafka_consumer.py
    ```
@@ -329,6 +351,7 @@ Si vous voulez contrôler chaque service individuellement :
 ### Accès au tableau de bord
 
 Une fois tous les services démarrés, ouvrez votre navigateur web et allez sur :
+
 ```
 http://localhost:5002
 ```
@@ -373,18 +396,18 @@ docker-compose down
 ### Utilisation du tableau de bord
 
 1. **Tableau de bord principal** affiche :
+
    - Graphique de vue d'ensemble du statut des machines
    - Lectures de capteurs en temps réel (températures, pressions, surchauffe, sous-refroidissement)
    - Alertes récentes avec indicateurs de gravité
    - Prédictions récentes avec scores de probabilité
-
 2. **Navigation vers la page "Historique des prédictions"** pour voir toutes les prédictions passées.
-
 3. **Navigation vers la page "Alertes"** pour voir toutes les alertes et leurs détails.
 
 ## Paramètres surveillés
 
 ### Capteurs thermodynamiques
+
 - **Température évaporateur** : Température de vaporisation du fluide frigorigène
 - **Température condenseur** : Température de condensation du fluide frigorigène
 - **Pression haute** : Pression côté refoulement du compresseur
@@ -395,6 +418,7 @@ docker-compose down
 - **Vibrations** : Niveau de vibrations mécaniques
 
 ### Indicateurs calculés
+
 - **COP théorique** : Coefficient de performance théorique
 - **Ratio de pression** : Rapport entre pression haute et basse
 - **Efficacité compresseur** : Efficacité énergétique du compresseur
@@ -460,8 +484,10 @@ docker-compose down -v
 ### Problèmes courants et solutions
 
 #### 1. **Services Docker non démarrés**
+
 **Symptôme** : Erreur de connexion aux services
 **Solutions** :
+
 ```powershell
 # Vérifier le statut des services
 .\check_services_status.ps1
@@ -472,8 +498,10 @@ docker-compose up -d
 ```
 
 #### 2. **Containers avec noms conflictuels**
+
 **Symptôme** : `The container name "/zookeeper" is already in use`
 **Solutions** :
+
 ```powershell
 # Nettoyer les anciens containers
 docker rm -f zookeeper kafka mongodb mongo-express kafka-ui
@@ -484,8 +512,10 @@ docker-compose up -d
 ```
 
 #### 3. **Port 5002 déjà utilisé**
+
 **Symptôme** : `OSError: [WinError 10048] Only one usage of each socket address`
 **Solutions** :
+
 ```powershell
 # Vérifier quels processus utilisent le port
 netstat -ano | findstr :5002
@@ -498,8 +528,10 @@ python app.py
 ```
 
 #### 4. **Échec de connexion Kafka**
+
 **Symptôme** : `kafka.errors.NoBrokersAvailable`
 **Solutions** :
+
 ```powershell
 # Vérifier que les services Docker sont démarrés
 docker-compose ps
@@ -512,8 +544,10 @@ Start-Sleep -Seconds 30
 ```
 
 #### 5. **Problèmes de connexion MongoDB**
+
 **Symptôme** : `ServerSelectionTimeoutError`
 **Solutions** :
+
 ```powershell
 # Vérifier que MongoDB est en cours d'exécution
 docker-compose ps | findstr mongo
@@ -526,16 +560,20 @@ docker-compose restart mongodb
 ```
 
 #### 6. **Commande `timeout` non reconnue**
+
 **Symptôme** : `'timeout' is not recognized as an internal or external command`
 **Solution** : Utiliser les nouveaux scripts PowerShell au lieu des scripts .bat
+
 ```powershell
 # Utiliser les scripts PowerShell
 .\run_all_services.ps1
 ```
 
 #### 7. **Scripts PowerShell bloqués**
+
 **Symptôme** : `Execution of scripts is disabled on this system`
 **Solutions** :
+
 ```powershell
 # Changer la politique d'exécution (temporairement)
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
@@ -545,8 +583,10 @@ powershell -ExecutionPolicy Bypass -File .\run_all_services.ps1
 ```
 
 #### 8. **Le tableau de bord ne se met pas à jour**
+
 **Symptôme** : Les données ne s'affichent pas en temps réel
 **Solutions** :
+
 ```powershell
 # Vérifier que tous les services sont démarrés
 .\check_services_status.ps1
@@ -558,12 +598,14 @@ powershell -ExecutionPolicy Bypass -File .\run_all_services.ps1
 ### Diagnostic automatique
 
 Utilisez le script de vérification automatique :
+
 ```powershell
 .\check_prerequisites.ps1    # Vérifier les prérequis
 .\check_services_status.ps1  # Vérifier le statut des services
 ```
 
 Ces scripts vérifient automatiquement :
+
 - ✅ Installation de Python et Docker
 - ✅ État des services Docker
 - ✅ Connectivité des services web
@@ -616,6 +658,7 @@ Remove-Item *.pkl
 ### Structure des données
 
 Les données de capteurs suivent ce format JSON :
+
 ```json
 {
   "timestamp": "2024-01-15T10:30:00",
@@ -678,6 +721,7 @@ Pour ajouter ou mettre à jour les captures d'écran du tableau de bord :
 ```
 
 **Noms de fichiers recommandés** :
+
 - `dashboard-main.png` - Tableau de bord principal
 - `alerts-page.png` - Page des alertes
 - `predictions-page.png` - Page des prédictions
@@ -737,8 +781,6 @@ Pour ajouter ou mettre à jour les captures d'écran du tableau de bord :
 
 ---
 
-**Créé par l'équipe de Maintenance Prédictive** - 2024  
-**Licence** : MIT  
-**Version** : 1.0.0
+**Créé par l'équipe de Maintenance Prédictive** - 2024**Licence** : MIT**Version** : 1.0.0
 
 > 💡 **Astuce** : Utilisez les nouveaux scripts PowerShell pour une expérience de démarrage sans problème. Consultez les logs des services Docker avec `docker-compose logs -f` pour diagnostiquer les problèmes de connexion.
