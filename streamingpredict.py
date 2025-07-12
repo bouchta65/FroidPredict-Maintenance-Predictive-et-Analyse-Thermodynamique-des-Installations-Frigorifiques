@@ -31,7 +31,7 @@ except Exception as e:
         exit(1)
 
 # Configuration Flask endpoint
-FLASK_ENDPOINT = "http://localhost:5001/api/refrigeration_prediction"
+FLASK_ENDPOINT = "http://localhost:5002/api/refrigeration_prediction"
 
 # Create Kafka consumer pour les données frigorifiques
 consumer = KafkaConsumer(
@@ -74,7 +74,7 @@ def calculate_thermodynamic_indicators(data):
         return {}
 
 print("🧊 Démarrage du service de prédiction pour installations frigorifiques")
-print("📊 Dashboard URL: http://localhost:5001")
+print("📊 Dashboard URL: http://localhost:5002")
 print("🔍 Kafka UI URL: http://localhost:8080")
 print("📈 MongoDB UI URL: http://localhost:8081")
 print("⏳ Attente des messages depuis Kafka (RefrigerationStream)...\n")

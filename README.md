@@ -140,28 +140,74 @@ Le système surveille en temps réel les paramètres critiques des installations
 
 ## 🚀 Démarrage rapide
 
-### Option 1 : Utilisation du script automatique (Recommandé)
+### ⚡ Option 1 : Démarrage automatique (Recommandé)
 
 1. **Ouvrir PowerShell en tant qu'administrateur** dans le dossier du projet
-2. **Exécuter le script de démarrage** :
+2. **Vérifier les prérequis** :
    ```powershell
-   .\run_all_services.bat
+   .\check_prerequisites.ps1
    ```
-3. **Attendre que tous les services se lancent** (environ 2-3 minutes)
-4. **Ouvrir votre navigateur** et aller sur : `http://localhost:5001`
+3. **Démarrer tous les services** :
+   ```powershell
+   .\run_all_services.ps1
+   ```
+4. **Vérifier le statut des services** :
+   ```powershell
+   .\check_services_status.ps1
+   ```
+5. **Ouvrir votre navigateur** et aller sur : `http://localhost:5002`
 
-### Option 2 : Démarrage manuel (étape par étape)
+### 🔧 Option 2 : Démarrage manuel (étape par étape)
 
-Si vous préférez comprendre chaque étape, suivez les instructions détaillées ci-dessous.
+Si vous préférez contrôler chaque étape :
+
+1. **Démarrer les services Docker** :
+   ```powershell
+   docker-compose up -d
+   ```
+
+2. **Attendre que les services se lancent** (15 secondes) :
+   ```powershell
+   Start-Sleep -Seconds 15
+   ```
+
+3. **Démarrer l'application Flask** :
+   ```powershell
+   python app.py
+   ```
+
+4. **Démarrer le producteur Kafka** (nouveau terminal) :
+   ```powershell
+   python kafka_producer.py
+   ```
+
+5. **Démarrer le service de prédiction** (nouveau terminal) :
+   ```powershell
+   python streamingpredict.py
+   ```
 
 ## 📋 Installation et configuration
 
 ### Prérequis
 
-- **Python 3.8+** : [Télécharger Python](https://www.python.org/downloads/)
+- **Python 3.11+** : [Télécharger Python](https://www.python.org/downloads/)
 - **Docker Desktop** : [Télécharger Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - **Git** : [Télécharger Git](https://git-scm.com/downloads)
 - **8 Go de RAM** recommandés pour une performance optimale
+
+### ✅ Vérification automatique des prérequis
+
+Utilisez le script de vérification automatique :
+```powershell
+.\check_prerequisites.ps1
+```
+
+Ce script vérifie :
+- ✅ Installation de Python
+- ✅ Installation de Docker
+- ✅ Docker en cours d'exécution
+- ✅ Packages Python requis
+- ✅ Installation automatique des packages manquants
 
 ### Étapes d'installation détaillées
 
@@ -171,33 +217,26 @@ git clone <repository_url>
 cd Syst-me-Pr-dictif-de-Maintenance-Industrielle
 ```
 
-#### 2. Créer et activer un environnement virtuel Python
+#### 2. Installer les dépendances Python
 ```powershell
-# Créer l'environnement virtuel
-python -m venv venv
-
-# Activer l'environnement virtuel
-venv\Scripts\activate
-
-# Vérifier que l'environnement est activé (vous devriez voir (venv) dans le prompt)
-```
-
-#### 3. Installer les dépendances Python
-```powershell
-# Mettre à jour pip
-python -m pip install --upgrade pip
-
 # Installer les dépendances
 pip install -r requirements.txt
 ```
 
-#### 4. Vérifier l'installation de Docker
+#### 3. Vérifier l'installation de Docker
 ```powershell
 # Vérifier que Docker est installé et en cours d'exécution
 docker --version
 docker-compose --version
 
 # Démarrer Docker Desktop si ce n'est pas déjà fait
+```
+
+#### 4. Nettoyer les anciens containers (si nécessaire)
+```powershell
+# Nettoyer les anciens containers
+docker rm -f zookeeper kafka mongodb mongo-express kafka-ui
+docker-compose down
 ```
 
 #### 5. Démarrer l'infrastructure Docker
@@ -227,51 +266,62 @@ Vous pouvez aussi vérifier manuellement :
 - **MongoDB Express** : http://localhost:8081 (utilisateur : admin, mot de passe : admin)
 - **MongoDB** : Connexion sur `mongodb://localhost:27017`
 
-#### 7. Entraîner le modèle de Machine Learning
-```powershell
-# Entraîner le modèle de régression logistique pour la maintenance prédictive
-python train_logistic.py
-
-# Vérifier que le modèle a été créé
-ls model_logistic_refrigeration.pkl
-```
+#### 7. Le modèle de Machine Learning sera créé automatiquement
+Le modèle est créé automatiquement au premier démarrage si il n'existe pas.
 
 ## 🎯 Utilisation de l'application
 
 ### Démarrage du système complet
 
-Une fois l'installation terminée, vous avez deux options pour démarrer l'application :
+Une fois l'installation terminée, utilisez les nouvelles méthodes simplifiées :
 
-#### Option A : Démarrage automatique (recommandé)
-```powershell
-# Exécuter le script qui démarre tous les services
-.\run_all_services.bat
-```
-Ce script va automatiquement :
-1. Démarrer le producteur Kafka (génération de données)
-2. Démarrer le service de prédiction en streaming
-3. Démarrer l'application web Flask
+#### 🚀 Méthode recommandée : Scripts PowerShell automatiques
 
-#### Option B : Démarrage manuel (pour le développement)
+1. **Démarrer tous les services** :
+   ```powershell
+   .\run_all_services.ps1
+   ```
+
+2. **Vérifier le statut** :
+   ```powershell
+   .\check_services_status.ps1
+   ```
+
+3. **Arrêter tous les services** :
+   ```powershell
+   .\stop_all_services.bat
+   ```
+
+#### 🔧 Méthode alternative : Démarrage manuel
 
 Si vous voulez contrôler chaque service individuellement :
 
-1. **Démarrer le producteur Kafka** dans un premier terminal :
+1. **Démarrer les services Docker** :
    ```powershell
-   python kafka_producer.py
+   docker-compose up -d
    ```
 
-2. **Démarrer le service de prédiction en streaming** dans un deuxième terminal :
+2. **Attendre que les services se lancent** (15 secondes) :
    ```powershell
-   python streamingpredict.py
+   Start-Sleep -Seconds 15
    ```
 
-3. **Démarrer l'application web Flask** dans un troisième terminal :
+3. **Démarrer l'application web Flask** :
    ```powershell
    python app.py
    ```
 
-4. **Optionnel - Surveiller les messages Kafka** dans un quatrième terminal :
+4. **Démarrer le producteur Kafka** dans un nouveau terminal :
+   ```powershell
+   python kafka_producer.py
+   ```
+
+5. **Démarrer le service de prédiction** dans un nouveau terminal :
+   ```powershell
+   python streamingpredict.py
+   ```
+
+6. **Optionnel - Surveiller les messages Kafka** dans un nouveau terminal :
    ```powershell
    python kafka_consumer.py
    ```
@@ -280,32 +330,44 @@ Si vous voulez contrôler chaque service individuellement :
 
 Une fois tous les services démarrés, ouvrez votre navigateur web et allez sur :
 ```
-http://localhost:5001
+http://localhost:5002
 ```
 
-> **Note importante** : Le port a été changé de 5000 à 5001 pour éviter les conflits avec les services système de Windows.
+> **🔄 Mise à jour importante** : Le port a été changé de 5001 à 5002 pour éviter les conflits.
 
 ### Interfaces disponibles
 
-- **Tableau de bord principal** : http://localhost:5001
-- **Kafka UI** : http://localhost:8080 (surveillance des messages)
-- **MongoDB Express** : http://localhost:8081 (consultation de la base de données)
+- **🌐 Tableau de bord principal** : http://localhost:5002
+- **📊 Kafka UI** : http://localhost:8080 (surveillance des messages)
+- **📈 MongoDB Express** : http://localhost:8081 (consultation de la base de données)
   - Utilisateur : `admin`
   - Mot de passe : `admin`
+
+### Vérification du système
+
+Pour vérifier que tout fonctionne correctement :
+
+```powershell
+# Vérifier tous les services
+.\check_services_status.ps1
+
+# Ou vérifier manuellement
+docker ps                    # Voir les containers Docker
+Get-Process -Name python     # Voir les processus Python
+```
 
 ### Arrêt du système
 
 Pour arrêter proprement tous les services :
 
 ```powershell
-# Arrêter les services Python (Ctrl+C dans chaque terminal)
-# Puis arrêter les services Docker
-docker-compose down
-```
-
-Ou utilisez le script d'arrêt :
-```powershell
+# Méthode rapide
 .\stop_all_services.bat
+
+# Ou méthode manuelle
+# 1. Arrêter les services Python (Ctrl+C dans chaque terminal)
+# 2. Arrêter les services Docker
+docker-compose down
 ```
 
 ### Utilisation du tableau de bord
@@ -397,7 +459,45 @@ docker-compose down -v
 
 ### Problèmes courants et solutions
 
-#### 1. **Échec de connexion Kafka**
+#### 1. **Services Docker non démarrés**
+**Symptôme** : Erreur de connexion aux services
+**Solutions** :
+```powershell
+# Vérifier le statut des services
+.\check_services_status.ps1
+
+# Démarrer Docker Desktop
+# Puis exécuter
+docker-compose up -d
+```
+
+#### 2. **Containers avec noms conflictuels**
+**Symptôme** : `The container name "/zookeeper" is already in use`
+**Solutions** :
+```powershell
+# Nettoyer les anciens containers
+docker rm -f zookeeper kafka mongodb mongo-express kafka-ui
+docker-compose down
+
+# Puis redémarrer
+docker-compose up -d
+```
+
+#### 3. **Port 5002 déjà utilisé**
+**Symptôme** : `OSError: [WinError 10048] Only one usage of each socket address`
+**Solutions** :
+```powershell
+# Vérifier quels processus utilisent le port
+netstat -ano | findstr :5002
+
+# Arrêter les processus Python existants
+Get-Process -Name python | Stop-Process -Force
+
+# Redémarrer l'application
+python app.py
+```
+
+#### 4. **Échec de connexion Kafka**
 **Symptôme** : `kafka.errors.NoBrokersAvailable`
 **Solutions** :
 ```powershell
@@ -407,19 +507,11 @@ docker-compose ps
 # Vérifier les logs Kafka
 docker-compose logs kafka
 
-# Redémarrer Kafka si nécessaire
-docker-compose restart kafka
+# Attendre plus longtemps le démarrage
+Start-Sleep -Seconds 30
 ```
 
-#### 2. **Port 5000 déjà utilisé**
-**Symptôme** : `OSError: [WinError 10048] Only one usage of each socket address`
-**Solution** : L'application utilise maintenant le port 5001 par défaut
-```powershell
-# Accédez au tableau de bord sur le nouveau port
-http://localhost:5001
-```
-
-#### 3. **Problèmes de connexion MongoDB**
+#### 5. **Problèmes de connexion MongoDB**
 **Symptôme** : `ServerSelectionTimeoutError`
 **Solutions** :
 ```powershell
@@ -433,97 +525,69 @@ python check_mongo.py
 docker-compose restart mongodb
 ```
 
-#### 4. **Erreurs de modèle ML**
-**Symptôme** : `FileNotFoundError: model_logistic_refrigeration.pkl`
-**Solutions** :
+#### 6. **Commande `timeout` non reconnue**
+**Symptôme** : `'timeout' is not recognized as an internal or external command`
+**Solution** : Utiliser les nouveaux scripts PowerShell au lieu des scripts .bat
 ```powershell
-# Entraîner le modèle
-python train_logistic.py
-
-# Vérifier la présence du fichier
-dir *.pkl
+# Utiliser les scripts PowerShell
+.\run_all_services.ps1
 ```
 
-#### 5. **Le tableau de bord ne se met pas à jour**
+#### 7. **Scripts PowerShell bloqués**
+**Symptôme** : `Execution of scripts is disabled on this system`
+**Solutions** :
+```powershell
+# Changer la politique d'exécution (temporairement)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Ou exécuter le script directement
+powershell -ExecutionPolicy Bypass -File .\run_all_services.ps1
+```
+
+#### 8. **Le tableau de bord ne se met pas à jour**
 **Symptôme** : Les données ne s'affichent pas en temps réel
 **Solutions** :
 ```powershell
-# Vérifier que streamingpredict.py est en cours d'exécution
-# Vérifier que kafka_producer.py génère des données
+# Vérifier que tous les services sont démarrés
+.\check_services_status.ps1
+
+# Vérifier les logs des services Python
 # Vérifier les connexions WebSocket dans la console du navigateur (F12)
-```
-
-#### 6. **Problèmes spécifiques à Windows**
-
-**Erreur d'encodage dans les scripts batch** :
-```powershell
-# Si vous rencontrez des problèmes avec les caractères spéciaux
-# Utilisez PowerShell au lieu de CMD
-# Ou définissez l'encodage UTF-8
-chcp 65001
-```
-
-**Problèmes avec les permissions Docker** :
-```powershell
-# Exécuter PowerShell en tant qu'administrateur
-# Ou ajouter votre utilisateur au groupe docker-users
-```
-
-**Conflits de port avec les services Windows** :
-```powershell
-# Vérifier quels ports sont utilisés
-netstat -ano | findstr :5000
-netstat -ano | findstr :5001
-netstat -ano | findstr :9092
 ```
 
 ### Diagnostic automatique
 
-Utilisez le script de test système pour diagnostiquer les problèmes :
+Utilisez le script de vérification automatique :
 ```powershell
-python test_system.py
+.\check_prerequisites.ps1    # Vérifier les prérequis
+.\check_services_status.ps1  # Vérifier le statut des services
 ```
 
-Ce script vérifie :
-- ✅ Installation de Python et des dépendances
-- ✅ Connectivité Docker
-- ✅ Connectivité Kafka
-- ✅ Connectivité MongoDB
-- ✅ Présence des modèles ML
+Ces scripts vérifient automatiquement :
+- ✅ Installation de Python et Docker
+- ✅ État des services Docker
 - ✅ Connectivité des services web
+- ✅ Processus Python en cours d'exécution
 
-### Surveillance des performances
-
-- **Kafka UI** : http://localhost:8080 - Surveiller les topics et messages
-- **MongoDB Express** : http://localhost:8081 - Consulter les données stockées
-- **API système** : http://localhost:5001/api/system_status - Statut de l'API
-
-### Commandes Docker utiles
+### Commandes utiles pour le diagnostic
 
 ```powershell
-# Voir l'état de tous les services
-docker-compose ps
+# Vérifier les containers Docker
+docker ps
 
-# Voir les logs en temps réel
+# Vérifier les logs des services
 docker-compose logs -f
 
-# Voir les logs d'un service spécifique
-docker-compose logs -f kafka
+# Vérifier les ports utilisés
+netstat -ano | findstr "5002 8080 8081 27017 9092"
 
-# Redémarrer un service spécifique
-docker-compose restart kafka
+# Vérifier les processus Python
+Get-Process -Name python
 
-# Arrêter tous les services
-docker-compose down
-
-# Arrêter et supprimer tous les volumes (réinitialisation complète)
-docker-compose down -v
-
-# Reconstruire les images Docker
-docker-compose build --no-cache
-
-# Nettoyer les ressources Docker inutilisées
-docker system prune -a
+# Tester la connectivité des services
+curl http://localhost:5002/api/system_status
+curl http://localhost:8080
+curl http://localhost:8081
 ```
 
 ### Réinitialisation complète
@@ -532,21 +596,19 @@ Si vous rencontrez des problèmes persistants :
 
 ```powershell
 # 1. Arrêter tous les services
-docker-compose down -v
+.\stop_all_services.bat
 
 # 2. Nettoyer Docker
+docker-compose down -v
 docker system prune -a
 
-# 3. Supprimer les modèles ML
+# 3. Supprimer les modèles ML (optionnel)
 Remove-Item *.pkl
 
-# 4. Réinstaller les dépendances
-pip install -r requirements.txt --force-reinstall
+# 4. Redémarrer Docker Desktop
 
 # 5. Redémarrer tout
-docker-compose up -d
-python train_logistic.py
-.\run_all_services.bat
+.\run_all_services.ps1
 ```
 
 ## 🚀 Développement et contribution
@@ -640,8 +702,43 @@ Pour ajouter ou mettre à jour les captures d'écran du tableau de bord :
 
 ---
 
+## 🔄 Mise à jour importante - Nouvelles instructions
+
+### ⚠️ Changements récents
+
+- **Port mis à jour** : L'application utilise maintenant le port **5002** au lieu de 5001
+- **Nouveaux scripts** : Scripts PowerShell améliorés pour une meilleure compatibilité Windows
+- **Vérification automatique** : Script de vérification des prérequis
+- **Gestion d'erreurs** : Nettoyage automatique des containers conflictuels
+
+### 🚀 Nouvelle méthode de démarrage recommandée
+
+```powershell
+# 1. Vérifier les prérequis
+.\check_prerequisites.ps1
+
+# 2. Démarrer tous les services
+.\run_all_services.ps1
+
+# 3. Vérifier le statut
+.\check_services_status.ps1
+
+# 4. Accéder au dashboard
+# http://localhost:5002
+```
+
+### 🔧 Résolution des problèmes corrigés
+
+- ✅ **Erreur `timeout` non reconnue** → Utilisation de `Start-Sleep` en PowerShell
+- ✅ **Containers conflictuels** → Nettoyage automatique avant démarrage
+- ✅ **Port incorrect** → Correction du port 5002 dans tous les scripts
+- ✅ **Services Docker non démarrés** → Ajout de `docker-compose up -d`
+- ✅ **Caractères spéciaux** → Scripts PowerShell sans accents
+
+---
+
 **Créé par l'équipe de Maintenance Prédictive** - 2024  
 **Licence** : MIT  
 **Version** : 1.0.0
 
-> 💡 **Astuce** : Consultez les logs des services Docker avec `docker-compose logs -f` pour diagnostiquer les problèmes de connexion.
+> 💡 **Astuce** : Utilisez les nouveaux scripts PowerShell pour une expérience de démarrage sans problème. Consultez les logs des services Docker avec `docker-compose logs -f` pour diagnostiquer les problèmes de connexion.
