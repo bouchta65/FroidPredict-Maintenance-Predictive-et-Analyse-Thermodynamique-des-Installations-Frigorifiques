@@ -70,7 +70,7 @@
                             {% if predictions %}
                                 {% for pred in predictions %}
                                 <tr>
-                                    <td>{{ pred.timestamp }}</td>
+                                    <td>{{ pred.timestamp|string if pred.timestamp is not string else pred.timestamp }}</td>
                                     <td>{{ pred.machine_id }}</td>
                                     <td>{{ pred.volt }}</td>
                                     <td>{{ pred.rotate }}</td>

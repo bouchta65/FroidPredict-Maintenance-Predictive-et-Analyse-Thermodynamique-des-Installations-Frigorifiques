@@ -136,27 +136,27 @@
                                     </tr>
                                 </thead>
                                 <tbody id="predictionsTable">
-                                    {% if predictions %}
-                                        {% for pred in predictions %}
-                                        <tr>
-                                            <td>{{ pred.machine_id }}</td>
-                                            <td>{{ pred.timestamp.split(' ')[1] if ' ' in pred.timestamp else pred.timestamp }}</td>
-                                            <td>
-                                                {% if pred.prediction == 0 %}
-                                                <span class="badge bg-success">OK</span>
-                                                {% else %}
-                                                <span class="badge bg-danger">Failure</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>{{ "%.1f"|format(pred.probability*100) }}%</td>
-                                        </tr>
-                                        {% endfor %}
-                                    {% else %}
-                                        <tr>
-                                            <td colspan="4" class="text-center">No data yet</td>
-                                        </tr>
-                                    {% endif %}
-                                </tbody>
+                            {% if predictions %}
+                                {% for pred in predictions %}
+                                <tr>
+                                    <td>{{ pred.machine_id }}</td>
+                                    <td>{{ pred.timestamp|string if pred.timestamp is not string else pred.timestamp }}</td>
+                                    <td>
+                                        {% if pred.prediction == 0 %}
+                                        <span class="badge bg-success">OK</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Failure</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ "%.1f"|format(pred.probability*100) }}%</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No data yet</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
                             </table>
                         </div>
                     </div>
