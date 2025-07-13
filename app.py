@@ -120,6 +120,11 @@ def view_alerts():
     all_alerts = get_alerts_from_db(100)
     return render_template('alerts.html', alerts=all_alerts)
 
+@app.route('/diagrams')
+def view_diagrams():
+    """Page pour visualiser les diagrammes enthalpiques"""
+    return render_template('diagrams.html')
+
 @app.route('/api/refrigeration_prediction', methods=['POST'])
 def receive_refrigeration_prediction():
     """Reçoit les données de prédiction pour installations frigorifiques"""
@@ -162,11 +167,13 @@ def receive_refrigeration_prediction():
         if sensors_collection is not None:
             try:
                 sensors_collection.insert_one(data.copy())
-            except:
-                pass
+                logger.info(f"✅ Données capteur sauvegardées pour machine {data['machine_id']}")
+            except Exception as e:
+                logger.error(f"❌ Erreur sauvegarde capteurs: {e}")
         
-        # Mise à jour temps réel dashboard
+        # Mise à jour temps réel dashboard ET diagrammes
         socketio.emit('new_prediction', data)
+        socketio.emit('new_sensor_data', data)  # Événement spécifique pour les diagrammes
         
         # Vérification des conditions d'alerte spécifiques aux installations frigorifiques
         alerts_to_add = []
@@ -318,12 +325,202 @@ def system_status():
         "alerts_count": len(alerts)
     })
 
+@app.route('/api/enthalpy_diagram_data', methods=['GET'])
+def get_enthalpy_diagram_data():
+    """API pour obtenir les données du diagramme enthalpique"""
+    try:
+        # Récupération des données récentes des capteurs depuis MongoDB
+        recent_data = []
+        
+        # Essayer d'abord les données de capteurs
+        if sensors_collection is not None:
+            try:
+                sensor_data = list(sensors_collection.find().sort("timestamp", -1).limit(5))
+                if sensor_data:
+                    recent_data = sensor_data
+                    logger.info(f"✅ {len(recent_data)} données capteurs récupérées pour le diagramme")
+            except Exception as e:
+                logger.warning(f"⚠️ Erreur récupération données capteurs: {e}")
+        
+        # Fallback sur les données de prédictions
+        if not recent_data:
+            recent_data = get_predictions_from_db(5)
+            if recent_data:
+                logger.info(f"✅ {len(recent_data)} données prédictions récupérées pour le diagramme")
+        
+        # Fallback sur données en mémoire
+        if not recent_data and predictions:
+            recent_data = predictions[-5:]
+            logger.info(f"✅ {len(recent_data)} données mémoire récupérées pour le diagramme")
+        
+        if not recent_data:
+            # Données par défaut si aucune donnée disponible
+            recent_data = [{
+                'temp_evaporator': -10.0,
+                'temp_condenser': 40.0,
+                'pressure_high': 12.5,
+                'pressure_low': 2.1,
+                'superheat': 8.0,
+                'subcooling': 5.0,
+                'machine_id': 'DEMO',
+                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }]
+            logger.info("⚠️ Utilisation de données par défaut pour le diagramme")
+        
+        diagram_data = []
+        for data in recent_data:
+            # Calculs thermodynamiques pour le diagramme enthalpique (R404A)
+            t_evap = data.get('temp_evaporator', -10)
+            t_cond = data.get('temp_condenser', 40)
+            superheat = data.get('superheat', 8)
+            subcooling = data.get('subcooling', 5)
+            
+            # Points du cycle frigorifique
+            # Point 1: Sortie évaporateur (vapeur surchauffée)
+            t1 = t_evap + superheat
+            p1 = data.get('pressure_low', 2.1)
+            h1 = calculate_enthalpy_vapor(t1, p1)
+            
+            # Point 2: Sortie compresseur (vapeur haute pression)
+            p2 = data.get('pressure_high', 12.5)
+            # Compression isentropique approximée
+            t2 = t1 + (p2/p1 - 1) * 30  # Approximation
+            h2 = h1 + (t2 - t1) * 2.1  # Approximation cp vapeur
+            
+            # Point 3: Sortie condenseur (liquide sous-refroidi)
+            t3 = t_cond - subcooling
+            p3 = p2
+            h3 = calculate_enthalpy_liquid(t3, p3)
+            
+            # Point 4: Sortie détendeur (mélange liquide-vapeur)
+            t4 = t_evap
+            p4 = p1
+            h4 = h3  # Détente isenthalpique
+            
+            diagram_data.append({
+                'machine_id': data.get('machine_id', 'Unknown'),
+                'timestamp': data.get('timestamp', datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+                'cycle_points': {
+                    'point1': {'T': t1, 'P': p1, 'h': h1, 'description': 'Sortie évaporateur'},
+                    'point2': {'T': t2, 'P': p2, 'h': h2, 'description': 'Sortie compresseur'},
+                    'point3': {'T': t3, 'P': p3, 'h': h3, 'description': 'Sortie condenseur'},
+                    'point4': {'T': t4, 'P': p4, 'h': h4, 'description': 'Sortie détendeur'}
+                },
+                'performance': {
+                    'cop': calculate_cop(h1, h2, h4),
+                    'cooling_capacity': h1 - h4,
+                    'compression_work': h2 - h1,
+                    'condensation_heat': h2 - h3
+                }
+            })
+        
+        return jsonify({
+            'status': 'success',
+            'diagram_data': diagram_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Erreur génération diagramme enthalpique: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+def calculate_enthalpy_vapor(temperature, pressure):
+    """Calcul approximatif de l'enthalpie pour la vapeur R404A"""
+    # Formule approximative basée sur les propriétés du R404A
+    return 250 + temperature * 1.2 + pressure * 2.5
+
+def calculate_enthalpy_liquid(temperature, pressure):
+    """Calcul approximatif de l'enthalpie pour le liquide R404A"""
+    # Formule approximative basée sur les propriétés du R404A
+    return 50 + temperature * 2.8 + pressure * 0.5
+
+def calculate_cop(h1, h2, h4):
+    """Calcul du coefficient de performance"""
+    cooling_effect = h1 - h4
+    work_input = h2 - h1
+    return cooling_effect / work_input if work_input > 0 else 0
+
+@app.route('/api/temperature_analysis', methods=['POST'])
+def analyze_temperatures():
+    """Analyse avancée des températures de condensation et évaporation"""
+    try:
+        data = request.json
+        
+        # Détermination de la température d'évaporation optimale
+        ambient_temp = data.get('ambient_temperature', 25)
+        cooling_load = data.get('cooling_load', 100)  # en %
+        
+        # Température d'évaporation optimale (fonction de la charge)
+        t_evap_optimal = -15 + (cooling_load / 100) * 10
+        
+        # Température de condensation optimale (fonction température ambiante)
+        t_cond_optimal = ambient_temp + 15  # Delta T condenseur
+        
+        # Analyse des températures actuelles
+        current_t_evap = data.get('temp_evaporator', -10)
+        current_t_cond = data.get('temp_condenser', 40)
+        
+        analysis = {
+            'current_conditions': {
+                'evaporator_temp': current_t_evap,
+                'condenser_temp': current_t_cond,
+                'ambient_temp': ambient_temp,
+                'cooling_load': cooling_load
+            },
+            'optimal_conditions': {
+                'evaporator_temp': t_evap_optimal,
+                'condenser_temp': t_cond_optimal
+            },
+            'deviations': {
+                'evaporator_deviation': current_t_evap - t_evap_optimal,
+                'condenser_deviation': current_t_cond - t_cond_optimal
+            },
+            'recommendations': []
+        }
+        
+        # Génération des recommandations
+        if abs(analysis['deviations']['evaporator_deviation']) > 3:
+            if analysis['deviations']['evaporator_deviation'] > 0:
+                analysis['recommendations'].append({
+                    'type': 'evaporator',
+                    'message': 'Température évaporateur trop élevée - Vérifier la charge en fluide frigorigène',
+                    'priority': 'high'
+                })
+            else:
+                analysis['recommendations'].append({
+                    'type': 'evaporator',
+                    'message': 'Température évaporateur trop basse - Risque de givre, ajuster le dégivrage',
+                    'priority': 'medium'
+                })
+        
+        if abs(analysis['deviations']['condenser_deviation']) > 5:
+            if analysis['deviations']['condenser_deviation'] > 0:
+                analysis['recommendations'].append({
+                    'type': 'condenser',
+                    'message': 'Température condenseur trop élevée - Nettoyer les échangeurs, vérifier ventilation',
+                    'priority': 'high'
+                })
+            else:
+                analysis['recommendations'].append({
+                    'type': 'condenser',
+                    'message': 'Température condenseur optimisée - Conditions favorables',
+                    'priority': 'low'
+                })
+        
+        return jsonify({
+            'status': 'success',
+            'analysis': analysis
+        })
+        
+    except Exception as e:
+        logger.error(f"Erreur analyse températures: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 if __name__ == '__main__':
     # Création des dossiers nécessaires
     os.makedirs(os.path.join(BASE_DIR, "templates"), exist_ok=True)
     os.makedirs(os.path.join(BASE_DIR, "static"), exist_ok=True)
     
     logger.info("🧊 Démarrage dashboard maintenance prédictive installations frigorifiques")
-    logger.info("🌐 http://localhost:5001")
+    logger.info("🌐 http://localhost:5002")
     
-    socketio.run(app, debug=True, host='0.0.0.0', port=5001)
+    socketio.run(app, debug=True, host='0.0.0.0', port=5002)
