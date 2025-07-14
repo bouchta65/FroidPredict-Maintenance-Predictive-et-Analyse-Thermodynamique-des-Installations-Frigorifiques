@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagramme de Mollier Frayo - Maintenance Prédictive Frigorifique</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .nav-btn {
+            background: #3498db;
+            color: white;
+            padding: 0.7rem 1.5rem;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .diagram-section {
+            text-align: center;
+        }
+
+        .diagram-container {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 1rem;
+            background: #f8f9fa;
+            margin: 1rem 0;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .diagram-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            color: #666;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .properties-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .properties-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        .properties-card h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .property-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.3rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .property-label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .property-value {
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .metadata-section {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .metadata-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+
+        .metadata-item h4 {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .metadata-item p {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            background: #e74c3c;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .success-message {
+            background: #27ae60;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .properties-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧊 Diagramme de Mollier - Fluide Frayo</h1>
+        <p>Système de refroidissement avec réservoir - Maintenance prédictive</p>
+        <div class="nav-buttons">
+            <a href="/" class="nav-btn">🏠 Accueil</a>
+            <a href="/dashboard" class="nav-btn">📊 Dashboard</a>
+            <a href="/diagrams" class="nav-btn">📈 Diagrammes Standards</a>
+            <a href="/predictions" class="nav-btn">🔮 Prédictions</a>
+            <a href="/alerts" class="nav-btn">🚨 Alertes</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Section Diagramme Principal -->
+        <div class="card diagram-section">
+            <h2>📈 Diagramme de Mollier (h-s) pour Frayo</h2>
+            <p>Diagramme enthalpie-entropie adapté aux données collectées depuis le réservoir</p>
+            
+            <div class="controls">
+                <button class="btn btn-primary" onclick="generateDiagram()">🔄 Diagramme Complet</button>
+                <button class="btn btn-primary" onclick="generatePedagogicalDiagram()">📚 Version Pédagogique</button>
+                <button class="btn btn-success" onclick="downloadDiagram()" id="downloadBtn" style="display: none;">💾 Télécharger PNG</button>
+                <button class="btn btn-primary" onclick="loadProperties()">📋 Propriétés</button>
+                <button class="btn btn-primary" onclick="showExplanation()">📖 Explication</button>
+            </div>
+
+            <div class="diagram-container" id="diagramContainer">
+                <div class="loading">
+                    <div class="spinner" id="loadingSpinner" style="display: none;"></div>
+                    <p id="loadingText">Cliquez sur "Générer Diagramme" pour commencer</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Métadonnées -->
+        <div class="metadata-section" id="metadataSection" style="display: none;">
+            <h3>📊 Informations du Diagramme</h3>
+            <div class="metadata-grid" id="metadataGrid">
+                <!-- Contenu généré dynamiquement -->
+            </div>
+        </div>
+
+        <!-- Section Propriétés -->
+        <div class="properties-section" id="propertiesSection" style="display: none;">
+            <div class="properties-card">
+                <h3>🧊 Propriétés du Fluide Frayo</h3>
+                <div id="fluidProperties">
+                    <!-- Contenu généré dynamiquement -->
+                </div>
+            </div>
+
+            <div class="properties-card">
+                <h3>📈 Propriétés de Saturation</h3>
+                <div id="saturationProperties">
+                    <!-- Contenu généré dynamiquement -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Explication Pédagogique -->
+        <div class="card" id="explanationSection" style="display: none;">
+            <h2>📖 Explication Pédagogique du Diagramme de Mollier</h2>
+            <div id="explanationContent">
+                <!-- Contenu généré dynamiquement -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDiagramData = null;
+        let currentPropertiesData = null;
+
+        // Génération du diagramme complet
+        async function generateDiagram() {
+            await generateDiagramVersion('/api/mollier_frayo', 'Génération du diagramme complet en cours...');
+        }
+
+        // Génération du diagramme pédagogique
+        async function generatePedagogicalDiagram() {
+            await generateDiagramVersion('/api/mollier_pedagogique', 'Génération du diagramme pédagogique en cours...');
+        }
+
+        // Fonction générique de génération
+        async function generateDiagramVersion(endpoint, loadingMessage) {
+            const container = document.getElementById('diagramContainer');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const metadataSection = document.getElementById('metadataSection');
+
+            // Affichage du loading
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>${loadingMessage}</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(endpoint);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    currentDiagramData = data;
+                    
+                    // Affichage du diagramme
+                    container.innerHTML = `
+                        <img src="data:image/png;base64,${data.diagram_base64}" 
+                             alt="Diagramme de Mollier Frayo" 
+                             class="diagram-image">
+                    `;
+
+                    // Affichage des métadonnées
+                    displayMetadata(data.metadata);
+                    metadataSection.style.display = 'block';
+                    downloadBtn.style.display = 'inline-block';
+
+                    // Message de succès
+                    const type = data.metadata.type || 'Diagramme';
+                    showMessage(`✅ ${type} généré avec succès!`, 'success');
+
+                } else {
+                    throw new Error(data.message || 'Erreur inconnue');
+                }
+
+            } catch (error) {
+                console.error('Erreur génération diagramme:', error);
+                container.innerHTML = `
+                    <div class="error-message">
+                        ❌ Erreur lors de la génération: ${error.message}
+                    </div>
+                `;
+                showMessage(`❌ Erreur: ${error.message}`, 'error');
+            }
+        }
+
+        // Chargement des propriétés
+        async function loadProperties() {
+            const propertiesSection = document.getElementById('propertiesSection');
+            
+            try {
+                const response = await fetch('/api/frayo_properties');
+                const data = await response.json();
+
+                if (data.fluid_properties) {
+                    currentPropertiesData = data;
+                    displayFluidProperties(data.fluid_properties);
+                    displaySaturationProperties(data.saturation_properties);
+                    propertiesSection.style.display = 'grid';
+                    showMessage('✅ Propriétés chargées avec succès!', 'success');
+                } else {
+                    throw new Error('Données de propriétés invalides');
+                }
+
+            } catch (error) {
+                console.error('Erreur chargement propriétés:', error);
+                showMessage(`❌ Erreur propriétés: ${error.message}`, 'error');
+            }
+        }
+
+        // Affichage des métadonnées
+        function displayMetadata(metadata) {
+            const grid = document.getElementById('metadataGrid');
+            
+            grid.innerHTML = `
+                <div class="metadata-item">
+                    <h4>Fluide</h4>
+                    <p>${metadata.fluid_name}</p>
+                </div>
+                <div class="metadata-item">
+                    <h4>Type de Diagramme</h4>
+                    <p>${metadata.diagram_type}</p>
+                </div>
+                <div class="metadata-item">
+                    <h4>Plage Températures</h4>
+                    <p>${metadata.temperature_range}</p>
+                </div>
+                <div class="metadata-item">
+                    <h4>Plage Pressions</h4>
+                    <p>${metadata.pressure_range}</p>
+                </div>
+            `;
+
+            // Ajout des zones colorées
+            if (metadata.zones) {
+                const zonesHtml = metadata.zones.map(zone => `<li>${zone}</li>`).join('');
+                grid.innerHTML += `
+                    <div class="metadata-item" style="grid-column: span 2;">
+                        <h4>Zones Colorées</h4>
+                        <ul style="margin-top: 0.5rem; list-style-position: inside;">
+                            ${zonesHtml}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Ajout des fonctionnalités
+            if (metadata.features) {
+                const featuresHtml = metadata.features.map(feature => `<li>${feature}</li>`).join('');
+                grid.innerHTML += `
+                    <div class="metadata-item" style="grid-column: span 2;">
+                        <h4>Fonctionnalités Incluses</h4>
+                        <ul style="margin-top: 0.5rem; list-style-position: inside;">
+                            ${featuresHtml}
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        // Affichage des propriétés du fluide
+        function displayFluidProperties(properties) {
+            const container = document.getElementById('fluidProperties');
+            
+            container.innerHTML = `
+                <div class="property-item">
+                    <span class="property-label">Nom:</span>
+                    <span class="property-value">${properties.name}</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-label">Température critique:</span>
+                    <span class="property-value">${properties.critical_temperature_celsius}°C</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-label">Pression critique:</span>
+                    <span class="property-value">${properties.critical_pressure_bar} bar</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-label">Masse molaire:</span>
+                    <span class="property-value">${properties.molar_mass_g_mol} g/mol</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-label">Constante des gaz:</span>
+                    <span class="property-value">${properties.gas_constant_kj_kg_k} kJ/kg·K</span>
+                </div>
+            `;
+        }
+
+        // Affichage des propriétés de saturation
+        function displaySaturationProperties(properties) {
+            const container = document.getElementById('saturationProperties');
+            
+            let html = '<div style="max-height: 300px; overflow-y: auto;">';
+            
+            properties.forEach(prop => {
+                html += `
+                    <div class="property-item" style="flex-direction: column; align-items: flex-start; margin-bottom: 1rem; padding: 0.5rem; background: white; border-radius: 5px;">
+                        <strong>T = ${prop.temperature_celsius}°C</strong>
+                        <small>P = ${prop.saturation_pressure_bar} bar | h_liq = ${prop.enthalpy_liquid_kj_kg} kJ/kg | h_vap = ${prop.enthalpy_vapor_kj_kg} kJ/kg</small>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Affichage de l'explication pédagogique
+        async function showExplanation() {
+            const explanationSection = document.getElementById('explanationSection');
+            const explanationContent = document.getElementById('explanationContent');
+
+            try {
+                const response = await fetch('/api/mollier_explanation');
+                const data = await response.json();
+
+                if (data.titre) {
+                    let html = `
+                        <div style="margin-bottom: 2rem;">
+                            <h3>${data.titre}</h3>
+                            <p style="font-size: 1.1rem; margin: 1rem 0;">${data.description}</p>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                            <div>
+                                <h4>📊 Axes du diagramme</h4>
+                                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+                                    <p><strong>Axe X:</strong> ${data.axes.x}</p>
+                                    <p><strong>Axe Y:</strong> ${data.axes.y}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h4>🎯 Applications</h4>
+                                <ul style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+                    `;
+
+                    data.applications.forEach(app => {
+                        html += `<li>${app}</li>`;
+                    });
+
+                    html += `
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4>🌈 Zones du diagramme</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                    `;
+
+                    Object.entries(data.zones_explication).forEach(([zone, info]) => {
+                        html += `
+                            <div style="border: 2px solid #ddd; border-radius: 10px; padding: 1rem; background: white;">
+                                <h5 style="color: ${zone === 'liquide' ? '#CC0000' : zone === 'vapeur' ? '#0066CC' : 'purple'}; margin-bottom: 0.5rem;">
+                                    ${info.etat}
+                                </h5>
+                                <p><strong>Position:</strong> ${info.position}</p>
+                                <p><strong>Couleur:</strong> ${info.couleur}</p>
+                                <p style="margin-top: 0.5rem; font-style: italic;">${info.description}</p>
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 2rem; background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%); color: white; padding: 1.5rem; border-radius: 10px;">
+                            <h4>📈 Courbes importantes</h4>
+                            <div style="margin-top: 1rem;">
+                                <p><strong>Courbe de bulle:</strong> ${data.courbes_importantes.courbe_bulle}</p>
+                                <p><strong>Courbe de rosée:</strong> ${data.courbes_importantes.courbe_rosee}</p>
+                                <p><strong>Point critique:</strong> ${data.courbes_importantes.point_critique}</p>
+                            </div>
+                        </div>
+                    `;
+
+                    explanationContent.innerHTML = html;
+                    explanationSection.style.display = 'block';
+                    
+                    // Scroll vers l'explication
+                    explanationSection.scrollIntoView({ behavior: 'smooth' });
+                    
+                    showMessage('📖 Explication chargée avec succès!', 'success');
+                } else {
+                    throw new Error('Données d\'explication invalides');
+                }
+
+            } catch (error) {
+                console.error('Erreur chargement explication:', error);
+                showMessage(`❌ Erreur explication: ${error.message}`, 'error');
+            }
+        }
+        function downloadDiagram() {
+            if (!currentDiagramData) {
+                showMessage('❌ Aucun diagramme à télécharger', 'error');
+                return;
+            }
+
+            const link = document.createElement('a');
+            link.href = `data:image/png;base64,${currentDiagramData.diagram_base64}`;
+            link.download = 'diagramme_mollier_frayo.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showMessage('💾 Diagramme téléchargé!', 'success');
+        }
+
+        // Affichage des messages
+        function showMessage(message, type) {
+            // Suppression des anciens messages
+            const oldMessages = document.querySelectorAll('.success-message, .error-message');
+            oldMessages.forEach(msg => msg.remove());
+
+            // Création du nouveau message
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'success' ? 'success-message' : 'error-message';
+            messageDiv.textContent = message;
+
+            // Insertion après les contrôles
+            const controls = document.querySelector('.controls');
+            controls.parentNode.insertBefore(messageDiv, controls.nextSibling);
+
+            // Suppression automatique après 5 secondes
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Chargement automatique des propriétés au démarrage
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧊 Page Diagramme Mollier Frayo chargée');
+            
+            // Message d'accueil
+            setTimeout(() => {
+                showMessage('👋 Bienvenue! Cliquez sur "Générer Diagramme" pour commencer', 'success');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

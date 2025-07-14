@@ -122,8 +122,18 @@ def view_alerts():
 
 @app.route('/diagrams')
 def view_diagrams():
-    """Page pour visualiser les diagrammes enthalpiques"""
-    return render_template('diagrams.html')
+    """Page pour visualiser les diagrammes de Mollier améliorés"""
+    return render_template('mollier_frayo_improved.html')
+
+@app.route('/mollier-frayo')
+def view_mollier_frayo():
+    """Page pour visualiser le diagramme de Mollier du fluide Frayo"""
+    return render_template('mollier_frayo_improved.html')
+
+@app.route('/mollier-frayo-improved')
+def view_mollier_frayo_improved():
+    """Page améliorée pour visualiser le diagramme de Mollier du fluide Frayo"""
+    return render_template('mollier_frayo_improved.html')
 
 @app.route('/api/refrigeration_prediction', methods=['POST'])
 def receive_refrigeration_prediction():
@@ -514,6 +524,109 @@ def analyze_temperatures():
     except Exception as e:
         logger.error(f"Erreur analyse températures: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/mollier_frayo', methods=['GET'])
+def get_mollier_frayo_diagram():
+    """API pour générer le diagramme de Mollier pour le fluide Frayo"""
+    try:
+        from mollier_api import generate_mollier_diagram_api
+        result = generate_mollier_diagram_api()
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Erreur génération diagramme Mollier Frayo: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erreur génération diagramme: {str(e)}'
+        }), 500
+
+@app.route('/api/frayo_properties', methods=['GET'])
+def get_frayo_properties():
+    """API pour obtenir les propriétés thermodynamiques du fluide Frayo"""
+    try:
+        from mollier_api import get_frayo_properties_data
+        result = get_frayo_properties_data()
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Erreur propriétés Frayo: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erreur propriétés: {str(e)}'
+        }), 500
+
+@app.route('/api/mollier_pedagogique', methods=['GET'])
+def get_mollier_pedagogique():
+    """API pour générer le diagramme de Mollier pédagogique"""
+    try:
+        from mollier_pedagogique_api import generate_pedagogical_mollier_api
+        result = generate_pedagogical_mollier_api()
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Erreur diagramme pédagogique: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erreur génération: {str(e)}'
+        }), 500
+
+@app.route('/api/mollier_explanation', methods=['GET'])
+def get_mollier_explanation():
+    """API pour obtenir l'explication pédagogique du diagramme"""
+    try:
+        from mollier_pedagogique_api import get_pedagogical_explanation
+        result = get_pedagogical_explanation()
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Erreur explication: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erreur explication: {str(e)}'
+        }), 500
+
+@app.route('/api/mollier_complet', methods=['GET'])
+def get_mollier_complet_diagram():
+    """API pour générer le diagramme de Mollier complet et responsive"""
+    try:
+        from mollier_complet_api import generate_complete_mollier_api
+        result = generate_complete_mollier_api()
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Erreur génération diagramme complet: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erreur génération diagramme complet: {str(e)}'
+        }), 500
+
+@app.route('/api/frayo_properties_complet', methods=['GET'])
+def get_frayo_properties_complet():
+    """API pour obtenir les propriétés complètes du fluide Frayo avec données producteur"""
+    try:
+        from mollier_complet_api import get_complete_frayo_properties
+        result = get_complete_frayo_properties()
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Erreur propriétés complètes: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erreur propriétés complètes: {str(e)}'
+        }), 500
+
+@app.route('/api/mollier_specifications', methods=['GET'])
+def get_mollier_specifications():
+    """API pour obtenir les spécifications détaillées du diagramme"""
+    try:
+        from mollier_complet_api import get_diagram_specifications
+        result = get_diagram_specifications()
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Erreur spécifications: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erreur spécifications: {str(e)}'
+        }), 500
+
+@app.route('/mollier-complet')
+def view_mollier_complet():
+    """Redirection vers la page diagrams avec l'onglet complet"""
+    return render_template('mollier_frayo_improved.html')
 
 if __name__ == '__main__':
     # Création des dossiers nécessaires
