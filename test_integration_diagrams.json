@@ -1,0 +1,61 @@
+{
+  "integration_test": {
+    "timestamp": "2025-07-14T02:54:26.318192",
+    "operation": "Integration du diagramme complet dans page diagrams",
+    "status": "SUCCESS",
+    "tests_passed": 6,
+    "total_tests": 6,
+    "success_rate": 100.0,
+    "changes_made": [
+      "Ajout onglet \"Complet\" à la page diagrams",
+      "Redirection /mollier-complet vers /diagrams",
+      "Suppression ancien template mollier_complet.html",
+      "Intégration fonctions JS pour diagramme complet",
+      "Ajout styles CSS pour nouvel onglet"
+    ]
+  },
+  "detailed_results": [
+    {
+      "test": "Suppression Ancien Template",
+      "status": "PASS",
+      "message": "Ancien template supprimé avec succès",
+      "timestamp": "2025-07-14T02:54:04.402358",
+      "duration_ms": 1
+    },
+    {
+      "test": "Page Diagrams Mise à Jour",
+      "status": "PASS",
+      "message": "Onglet complet intégré (68730 chars)",
+      "timestamp": "2025-07-14T02:54:06.471585",
+      "duration_ms": 2068
+    },
+    {
+      "test": "Redirection Mollier Complet",
+      "status": "PASS",
+      "message": "Redirection vers diagrams avec onglet complet",
+      "timestamp": "2025-07-14T02:54:08.527832",
+      "duration_ms": 2056
+    },
+    {
+      "test": "Fonctions JavaScript",
+      "status": "PASS",
+      "message": "Toutes les fonctions JS présentes (4)",
+      "timestamp": "2025-07-14T02:54:10.579478",
+      "duration_ms": 2050
+    },
+    {
+      "test": "API Diagramme Complet",
+      "status": "PASS",
+      "message": "API OK - 12 fonctionnalités (904928 chars)",
+      "timestamp": "2025-07-14T02:54:20.071999",
+      "duration_ms": 9486
+    },
+    {
+      "test": "Cohérence Navigation",
+      "status": "PASS",
+      "message": "Navigation cohérente (3 pages testées)",
+      "timestamp": "2025-07-14T02:54:26.316187",
+      "duration_ms": 6244
+    }
+  ]
+}

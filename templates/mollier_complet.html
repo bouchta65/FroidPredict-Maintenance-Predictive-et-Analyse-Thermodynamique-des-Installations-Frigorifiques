@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagramme de Mollier Complet - Fluide Frayo</title>
+    
+    <!-- Styles modernes -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    
+    <!-- Librairies pour graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #0066CC;
+            --secondary-color: #FF6600;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 2rem 2rem;
+        }
+
+        .diagram-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .diagram-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .feature-badge {
+            background: linear-gradient(45deg, var(--success-color), #20c997);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-block;
+            margin: 0.25rem;
+        }
+
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            background: linear-gradient(45deg, #f8f9fa, white);
+            border-radius: 1rem;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e9ecef;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .diagram-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 2px solid #e9ecef;
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .spec-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .color-sample {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            border: 2px solid #333;
+            vertical-align: middle;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .btn-custom {
+            border-radius: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(45deg, var(--primary-color), #0056b3);
+            color: white;
+        }
+
+        .btn-secondary-custom {
+            background: linear-gradient(45deg, var(--secondary-color), #e55a00);
+            color: white;
+        }
+
+        .btn-success-custom {
+            background: linear-gradient(45deg, var(--success-color), #1e7e34);
+            color: white;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .progress-container {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .progress {
+            height: 6px;
+            border-radius: 3px;
+            background: #e9ecef;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .metadata-section {
+            background: #f8f9fa;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border: 1px solid #e9ecef;
+        }
+
+        .responsive-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .feature-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 3px solid var(--info-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 1rem 0;
+            }
+            
+            .diagram-card {
+                padding: 1rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .specs-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(45deg, #0066CC, #FF6600);">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-diagram-3"></i> Maintenance Prédictive
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="bi bi-house"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/predictions"><i class="bi bi-graph-up"></i> Prédictions</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/alerts"><i class="bi bi-exclamation-triangle"></i> Alertes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/diagrams"><i class="bi bi-diagram-2"></i> Diagrammes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/mollier-complet">
+                            <i class="bi bi-diagram-3-fill"></i> Mollier Complet
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Section Hero -->
+    <div class="hero-section">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold animate__animated animate__fadeInDown">
+                <i class="bi bi-diagram-3-fill"></i> Diagramme de Mollier Complet
+            </h1>
+            <p class="lead animate__animated animate__fadeInUp animate__delay-1s">
+                Fluide frigorigène Frayo avec données du producteur - Version responsive et scientifique
+            </p>
+            <div class="mt-3">
+                <span class="feature-badge animate__animated animate__zoomIn animate__delay-2s">
+                    <i class="bi bi-check-circle"></i> Haute Résolution 300 DPI
+                </span>
+                <span class="feature-badge animate__animated animate__zoomIn animate__delay-2s">
+                    <i class="bi bi-palette"></i> Zones Colorées Spécifiées
+                </span>
+                <span class="feature-badge animate__animated animate__zoomIn animate__delay-2s">
+                    <i class="bi bi-arrow-repeat"></i> Cycle Frigorifique
+                </span>
+                <span class="feature-badge animate__animated animate__zoomIn animate__delay-2s">
+                    <i class="bi bi-graph-up"></i> Données Producteur
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu Principal -->
+    <div class="container">
+        <!-- Diagramme Principal -->
+        <div class="diagram-card animate__animated animate__fadeIn">
+            <div class="row">
+                <div class="col-md-8">
+                    <h2 class="h3 fw-bold mb-3">
+                        <i class="bi bi-diagram-3 text-primary"></i> Diagramme Complet
+                    </h2>
+                    <p class="text-muted">
+                        Diagramme de Mollier (h-s) avec toutes les spécifications demandées : 
+                        zones colorées, cycle frigorifique, données producteur, et encarts complémentaires.
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="action-buttons">
+                        <button class="btn btn-custom btn-primary-custom" onclick="generateCompleteDiagram()">
+                            <i class="bi bi-play-circle"></i> Générer
+                        </button>
+                        <button class="btn btn-custom btn-secondary-custom" onclick="loadSpecifications()" disabled id="specsBtn">
+                            <i class="bi bi-info-circle"></i> Spécifications
+                        </button>
+                        <button class="btn btn-custom btn-success-custom" onclick="downloadDiagram()" disabled id="downloadBtn">
+                            <i class="bi bi-download"></i> Télécharger
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Barre de progression -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+                <small class="text-muted mt-1" id="progressText">Initialisation...</small>
+            </div>
+
+            <!-- Zone d'affichage du diagramme -->
+            <div class="mt-4" id="diagramContainer">
+                <div class="loading-container">
+                    <i class="bi bi-diagram-3 text-primary" style="font-size: 3rem;"></i>
+                    <h4 class="mt-3 text-muted">Prêt à générer le diagramme</h4>
+                    <p class="text-muted">Cliquez sur "Générer" pour créer le diagramme de Mollier complet</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spécifications et Métadonnées -->
+        <div class="metadata-section" id="metadataSection" style="display: none;">
+            <h3 class="h4 fw-bold mb-3">
+                <i class="bi bi-gear text-info"></i> Spécifications Techniques
+            </h3>
+            <div id="specificationsContent"></div>
+        </div>
+
+        <!-- Fonctionnalités Responsive -->
+        <div class="diagram-card">
+            <h3 class="h4 fw-bold mb-3">
+                <i class="bi bi-phone text-success"></i> Fonctionnalités Responsive
+            </h3>
+            <div class="responsive-features">
+                <div class="feature-item">
+                    <h5><i class="bi bi-palette2 text-primary"></i> Zones Colorées</h5>
+                    <p class="mb-1">
+                        <span class="color-sample" style="background-color: #FFE6E6;"></span>
+                        Rouge clair : Liquide sous-refroidi
+                    </p>
+                    <p class="mb-1">
+                        <span class="color-sample" style="background-color: #E6F3FF;"></span>
+                        Bleu clair : Vapeur surchauffée
+                    </p>
+                    <p class="mb-0">
+                        <span class="color-sample" style="background-color: #F0E6FF;"></span>
+                        Violet clair : Mélange liquide + vapeur
+                    </p>
+                </div>
+
+                <div class="feature-item">
+                    <h5><i class="bi bi-arrow-repeat text-warning"></i> Cycle Frigorifique</h5>
+                    <p class="mb-1">• Points numérotés (1,2,3,4)</p>
+                    <p class="mb-1">• Flèches orange nettes</p>
+                    <p class="mb-1">• Étiquettes encadrées</p>
+                    <p class="mb-0">• Évite le titre du diagramme</p>
+                </div>
+
+                <div class="feature-item">
+                    <h5><i class="bi bi-graph-up text-info"></i> Données Producteur</h5>
+                    <p class="mb-1">• Points expérimentaux jaunes</p>
+                    <p class="mb-1">• Plage -25°C à 60°C</p>
+                    <p class="mb-1">• Pressions 0.85 à 22.15 bar</p>
+                    <p class="mb-0">• Encart T-P complémentaire</p>
+                </div>
+
+                <div class="feature-item">
+                    <h5><i class="bi bi-layout-sidebar text-secondary"></i> Éléments Visuels</h5>
+                    <p class="mb-1">• Légende claire à gauche</p>
+                    <p class="mb-1">• Titre centré en haut</p>
+                    <p class="mb-1">• Isothermes et isobares</p>
+                    <p class="mb-0">• Flèche chaleur latente</p>
+                </div>
+
+                <div class="feature-item">
+                    <h5><i class="bi bi-eye text-danger"></i> Style Scientifique</h5>
+                    <p class="mb-1">• Résolution 300 DPI</p>
+                    <p class="mb-1">• Police claire lisible</p>
+                    <p class="mb-1">• Fond blanc/dégradé</p>
+                    <p class="mb-0">• Design responsive</p>
+                </div>
+
+                <div class="feature-item">
+                    <h5><i class="bi bi-grid text-primary"></i> Encarts Complémentaires</h5>
+                    <p class="mb-1">• Diagramme T-P dans coin</p>
+                    <p class="mb-1">• Données expérimentales</p>
+                    <p class="mb-1">• Graphiques simplifiés</p>
+                    <p class="mb-0">• Intégration harmonieuse</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let currentDiagramData = null;
+
+        // Génération du diagramme complet
+        async function generateCompleteDiagram() {
+            const container = document.getElementById('diagramContainer');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.querySelector('.progress-bar');
+            const progressText = document.getElementById('progressText');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const specsBtn = document.getElementById('specsBtn');
+
+            // Affichage du loading avec progression
+            progressContainer.style.display = 'block';
+            container.innerHTML = `
+                <div class="loading-container animate__animated animate__pulse">
+                    <div class="spinner"></div>
+                    <h4 class="mt-3 text-primary">Génération en cours...</h4>
+                    <p class="text-muted">Création du diagramme de Mollier complet avec données producteur</p>
+                </div>
+            `;
+
+            // Simulation progression
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressBar.style.width = progress + '%';
+                
+                if (progress < 30) {
+                    progressText.textContent = 'Initialisation des propriétés thermodynamiques...';
+                } else if (progress < 60) {
+                    progressText.textContent = 'Tracé des courbes de saturation et zones...';
+                } else if (progress < 85) {
+                    progressText.textContent = 'Ajout du cycle frigorifique et données producteur...';
+                } else {
+                    progressText.textContent = 'Finalisation et optimisation...';
+                }
+            }, 200);
+
+            try {
+                const response = await fetch('/api/mollier_complet');
+                const data = await response.json();
+
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                progressText.textContent = 'Terminé !';
+
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 1000);
+
+                if (data.status === 'success') {
+                    currentDiagramData = data;
+                    
+                    // Affichage du diagramme avec animation
+                    container.innerHTML = `
+                        <div class="text-center animate__animated animate__fadeIn">
+                            <img src="data:image/png;base64,${data.diagram_base64}" 
+                                 alt="Diagramme de Mollier Complet Frayo" 
+                                 class="diagram-image">
+                            <div class="mt-3">
+                                <span class="badge bg-success me-2">
+                                    <i class="bi bi-check-circle"></i> Généré avec succès
+                                </span>
+                                <span class="badge bg-info me-2">
+                                    <i class="bi bi-file-earmark-image"></i> ${Math.round(data.file_info.size_bytes / 1024)} KB
+                                </span>
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-camera"></i> ${data.file_info.resolution}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+
+                    // Activation des boutons
+                    downloadBtn.disabled = false;
+                    specsBtn.disabled = false;
+
+                    // Animation des boutons
+                    downloadBtn.classList.add('animate__animated', 'animate__pulse');
+                    specsBtn.classList.add('animate__animated', 'animate__pulse');
+
+                } else {
+                    container.innerHTML = `
+                        <div class="alert alert-danger animate__animated animate__shakeX" role="alert">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Erreur de génération :</strong> ${data.message}
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                progressContainer.style.display = 'none';
+                
+                container.innerHTML = `
+                    <div class="alert alert-danger animate__animated animate__shakeX" role="alert">
+                        <i class="bi bi-wifi-off"></i>
+                        <strong>Erreur de connexion :</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Chargement des spécifications
+        async function loadSpecifications() {
+            if (!currentDiagramData) return;
+
+            const metadataSection = document.getElementById('metadataSection');
+            const specsContent = document.getElementById('specificationsContent');
+
+            try {
+                const response = await fetch('/api/mollier_specifications');
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    const specs = data.specifications;
+                    
+                    specsContent.innerHTML = `
+                        <div class="specs-grid">
+                            <div class="spec-card">
+                                <h5 class="text-primary"><i class="bi bi-rulers"></i> Axes du Diagramme</h5>
+                                <p><strong>Axe X :</strong> ${specs.axes.x_axis.label}</p>
+                                <p><strong>Plage :</strong> ${specs.axes.x_axis.range[0]} à ${specs.axes.x_axis.range[1]} ${specs.axes.x_axis.unit}</p>
+                                <p><strong>Axe Y :</strong> ${specs.axes.y_axis.label}</p>
+                                <p><strong>Plage :</strong> ${specs.axes.y_axis.range[0]} à ${specs.axes.y_axis.range[1]} ${specs.axes.y_axis.unit}</p>
+                            </div>
+
+                            <div class="spec-card">
+                                <h5 class="text-success"><i class="bi bi-palette"></i> Zones Colorées</h5>
+                                <p>
+                                    <span class="color-sample" style="background-color: ${specs.zones.liquid_subcooled.color};"></span>
+                                    ${specs.zones.liquid_subcooled.description}
+                                </p>
+                                <p>
+                                    <span class="color-sample" style="background-color: ${specs.zones.vapor_superheated.color};"></span>
+                                    ${specs.zones.vapor_superheated.description}
+                                </p>
+                                <p>
+                                    <span class="color-sample" style="background-color: ${specs.zones.mixture.color};"></span>
+                                    ${specs.zones.mixture.description}
+                                </p>
+                            </div>
+
+                            <div class="spec-card">
+                                <h5 class="text-warning"><i class="bi bi-arrow-repeat"></i> Cycle Frigorifique</h5>
+                                <p><strong>Couleur :</strong> <span class="color-sample" style="background-color: ${specs.refrigeration_cycle.color};"></span> Orange</p>
+                                <p><strong>Épaisseur :</strong> ${specs.refrigeration_cycle.line_width}px</p>
+                                <div class="mt-2">
+                                    <strong>Points du cycle :</strong>
+                                    <ul class="list-unstyled mt-1">
+                                        ${Object.entries(specs.refrigeration_cycle.points).map(([num, desc]) => 
+                                            `<li><span class="badge bg-secondary me-1">${num}</span> ${desc}</li>`
+                                        ).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="spec-card">
+                                <h5 class="text-info"><i class="bi bi-graph-up"></i> Éléments Techniques</h5>
+                                <p><strong>Isothermes :</strong> ${specs.additional_elements.isotherms.temperatures.length} lignes</p>
+                                <p><strong>Isobares :</strong> ${specs.additional_elements.isobars.pressures.length} lignes</p>
+                                <p><strong>Chaleur latente :</strong> Flèche bidirectionnelle</p>
+                                <p><strong>Point critique :</strong> Visible et annoté</p>
+                            </div>
+
+                            <div class="spec-card">
+                                <h5 class="text-danger"><i class="bi bi-eye"></i> Style et Qualité</h5>
+                                <p><strong>Résolution :</strong> 300 DPI haute qualité</p>
+                                <p><strong>Design :</strong> ${specs.style_general.responsive ? 'Responsive' : 'Fixe'} et ${specs.style_general.scientific ? 'scientifique' : 'standard'}</p>
+                                <p><strong>Lisibilité :</strong> ${specs.style_general.readable ? 'Optimisée' : 'Standard'}</p>
+                                <p><strong>Arrière-plan :</strong> ${specs.style_general.background}</p>
+                            </div>
+
+                            <div class="spec-card">
+                                <h5 class="text-secondary"><i class="bi bi-grid"></i> Encarts et Légende</h5>
+                                <p><strong>Encart T-P :</strong> ${specs.corner_diagrams.temperature_pressure.location}</p>
+                                <p><strong>Données exp. :</strong> ${specs.corner_diagrams.experimental_data.location}</p>
+                                <p><strong>Légende :</strong> ${specs.legend.location}</p>
+                                <p><strong>Éléments :</strong> ${specs.legend.content.length} items</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h6 class="fw-bold"><i class="bi bi-info-circle text-info"></i> Informations du Diagramme Généré</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Type :</strong> ${currentDiagramData.metadata.type}</p>
+                                    <p class="mb-1"><strong>Version :</strong> ${currentDiagramData.metadata.generation_info.version}</p>
+                                    <p class="mb-1"><strong>Fonctionnalités :</strong> ${currentDiagramData.metadata.generation_info.features_count}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Zones :</strong> ${currentDiagramData.metadata.generation_info.zones_count}</p>
+                                    <p class="mb-1"><strong>Points cycle :</strong> ${currentDiagramData.metadata.generation_info.cycle_points}</p>
+                                    <p class="mb-1"><strong>Encarts :</strong> ${currentDiagramData.metadata.generation_info.corner_diagrams}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    metadataSection.style.display = 'block';
+                    metadataSection.classList.add('animate__animated', 'animate__fadeInUp');
+                }
+
+            } catch (error) {
+                specsContent.innerHTML = `
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Erreur lors du chargement des spécifications : ${error.message}
+                    </div>
+                `;
+                metadataSection.style.display = 'block';
+            }
+        }
+
+        // Téléchargement du diagramme
+        function downloadDiagram() {
+            if (!currentDiagramData) return;
+
+            const link = document.createElement('a');
+            link.href = 'data:image/png;base64,' + currentDiagramData.diagram_base64;
+            link.download = 'mollier_frayo_complet_' + new Date().toISOString().slice(0,10) + '.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Notification de succès
+            const toast = document.createElement('div');
+            toast.className = 'toast align-items-center text-bg-success border-0 position-fixed top-0 end-0 m-3';
+            toast.style.zIndex = '9999';
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi bi-download"></i> Diagramme téléchargé avec succès !
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            setTimeout(() => document.body.removeChild(toast), 5000);
+        }
+
+        // Animation d'initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animation des éléments au chargement
+            const cards = document.querySelectorAll('.diagram-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('animate__animated', 'animate__fadeInUp');
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>
