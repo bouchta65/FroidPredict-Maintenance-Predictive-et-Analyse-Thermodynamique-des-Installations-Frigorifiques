@@ -166,14 +166,20 @@
               </div>
             </div>
 
-            <!-- Cycle Diagram Placeholder -->
+            <!-- Mollier Diagram (h-s) -->
             <div class="mt-6">
-              <h4 class="text-md font-medium text-gray-700 mb-3">P-h Diagram</h4>
-              <div class="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                <div class="text-center">
-                  <ChartPieIcon class="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                  <p class="text-gray-500">Interactive P-h diagram will be implemented here</p>
-                  <p class="text-xs text-gray-400 mt-1">Showing cycle points and refrigerant properties</p>
+              <h4 class="text-md font-medium text-gray-700 mb-3">Diagramme de Mollier (h-s) - Fluide Frayo</h4>
+              <div class="bg-gray-50 rounded-lg p-4">
+                <MollierDiagramSimple 
+                  :cycle-data="data.cycle_points"
+                  :width="900"
+                  :height="700"
+                />
+                <div class="mt-4 text-sm text-gray-600">
+                  <p><strong>Fluide frigorigène:</strong> Frayo</p>
+                  <p><strong>Type de diagramme:</strong> Enthalpie-Entropie (h-s)</p>
+                  <p><strong>Données:</strong> 50 points de mesure du réservoir + cycle frigorifique 4 étapes</p>
+                  <p><strong>Note:</strong> Version simplifiée avec Chart.js et calculs thermodynamiques précis</p>
                 </div>
               </div>
             </div>
@@ -204,6 +210,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRefrigerationStore } from '@/stores/refrigeration'
 import Layout from '@/components/Layout.vue'
+import MollierDiagram from '@/components/MollierDiagram.vue'
+import MollierDiagramSimple from '@/components/MollierDiagramSimple.vue'
 import { ChartPieIcon } from '@heroicons/vue/24/outline'
 import moment from 'moment'
 

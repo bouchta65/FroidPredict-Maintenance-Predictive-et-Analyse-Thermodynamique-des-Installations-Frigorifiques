@@ -1,0 +1,21 @@
+{
+  "name": "froid-predict",
+  "version": "1.0.0",
+  "description": "Predictive Maintenance and Thermodynamic Analysis for Refrigeration Systems",
+  "private": true,
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "preview": "cd frontend && npm run preview",
+    "install-frontend": "cd frontend && npm install",
+    "setup": "npm run install-frontend"
+  },
+  "keywords": [
+    "refrigeration",
+    "predictive-maintenance",
+    "thermodynamic-analysis",
+    "mollier-diagram"
+  ],
+  "author": "",
+  "license": "ISC"
+}

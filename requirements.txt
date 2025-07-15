@@ -12,3 +12,4 @@ requests
 python-socketio
 eventlet
 python-engineio
+flask-cors
