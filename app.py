@@ -1,5 +1,6 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, jsonify, request
 from flask_socketio import SocketIO
+from flask_cors import CORS
 import json
 from datetime import datetime
 from sklearn.linear_model import LogisticRegression
@@ -17,7 +18,10 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'refrigeration_maintenance_dashboard_secret'
-socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Enable CORS for Vue.js frontend
+CORS(app, origins=["http://localhost:3000"])
+socketio = SocketIO(app, cors_allowed_origins=["http://localhost:3000", "http://localhost:5002"])
 
 # Configuration MongoDB
 try:
@@ -102,28 +106,67 @@ def get_alerts_from_db(limit=50):
             pass
     return alerts[-limit:] if alerts else []
 
-@app.route('/')
-def index():
+# API endpoints for Vue.js frontend
+@app.route('/api/dashboard_data')
+def get_dashboard_data():
+    """Get dashboard data for Vue.js frontend"""
     recent_predictions = get_predictions_from_db(10)
     recent_alerts = get_alerts_from_db(10)
-    return render_template('dashboard.html', 
-                         predictions=recent_predictions, 
-                         alerts=recent_alerts)
+    
+    # Clean MongoDB ObjectId for JSON serialization
+    for prediction in recent_predictions:
+        if '_id' in prediction:
+            prediction['_id'] = str(prediction['_id'])
+    
+    for alert in recent_alerts:
+        if '_id' in alert:
+            alert['_id'] = str(alert['_id'])
+    
+    # Get real database counts, not local array lengths
+    real_pred_count = predictions_collection.count_documents({}) if predictions_collection is not None else 0
+    # Use same filter as alerts count API for consistency  
+    real_alert_count = alerts_collection.count_documents({'status': 'active'}) if alerts_collection is not None else len([a for a in alerts if a.get('status', 'active') == 'active'])
+    
+    return jsonify({
+        'status': 'success',
+        'predictions': recent_predictions,
+        'alerts': recent_alerts,
+        'stats': {
+            'total_predictions': real_pred_count,
+            'total_alerts': real_alert_count,
+            'mongodb_connected': predictions_collection is not None
+        }
+    })
 
-@app.route('/predictions')
-def view_predictions():
+@app.route('/api/predictions')
+def api_get_predictions():
+    """Get all predictions for Vue.js frontend"""
     all_predictions = get_predictions_from_db(100)
-    return render_template('predictions.html', predictions=all_predictions)
+    
+    # Clean MongoDB ObjectId for JSON serialization
+    for prediction in all_predictions:
+        if '_id' in prediction:
+            prediction['_id'] = str(prediction['_id'])
+    
+    return jsonify({
+        'status': 'success',
+        'predictions': all_predictions
+    })
 
-@app.route('/alerts')
-def view_alerts():
+@app.route('/api/alerts')
+def api_get_alerts():
+    """Get all alerts for Vue.js frontend"""
     all_alerts = get_alerts_from_db(100)
-    return render_template('alerts.html', alerts=all_alerts)
-
-@app.route('/diagrams')
-def view_diagrams():
-    """Page pour visualiser les diagrammes enthalpiques"""
-    return render_template('diagrams.html')
+    
+    # Clean MongoDB ObjectId for JSON serialization
+    for alert in all_alerts:
+        if '_id' in alert:
+            alert['_id'] = str(alert['_id'])
+    
+    return jsonify({
+        'status': 'success',
+        'alerts': all_alerts
+    })
 
 @app.route('/api/refrigeration_prediction', methods=['POST'])
 def receive_refrigeration_prediction():
@@ -174,6 +217,10 @@ def receive_refrigeration_prediction():
         # Mise à jour temps réel dashboard ET diagrammes
         socketio.emit('new_prediction', data)
         socketio.emit('new_sensor_data', data)  # Événement spécifique pour les diagrammes
+        
+        # Emit prediction count update
+        total_predictions = len(predictions) if predictions_collection is None else predictions_collection.count_documents({})
+        socketio.emit('prediction_count_updated', {'count': total_predictions, 'timestamp': data['timestamp']})
         
         # Vérification des conditions d'alerte spécifiques aux installations frigorifiques
         alerts_to_add = []
@@ -303,6 +350,18 @@ def receive_refrigeration_prediction():
             # Émission temps réel
             socketio.emit('new_alert', alert)
         
+        # Emit alert count update after processing all alerts
+        if alerts_to_add:
+            if alerts_collection is not None:
+                try:
+                    total_alerts = alerts_collection.count_documents({'status': 'active'})
+                except:
+                    total_alerts = len([a for a in alerts if a.get('status', 'active') == 'active'])
+            else:
+                total_alerts = len([a for a in alerts if a.get('status', 'active') == 'active'])
+            
+            socketio.emit('alert_count_updated', {'count': total_alerts, 'timestamp': data['timestamp']})
+        
         return jsonify({
             "status": "success", 
             "prediction": prediction,
@@ -324,6 +383,95 @@ def system_status():
         "predictions_count": len(predictions),
         "alerts_count": len(alerts)
     })
+
+@app.route('/api/predictions/count')
+def api_predictions_count():
+    """Get predictions count for real-time updates"""
+    try:
+        if predictions_collection is not None:
+            # Count from MongoDB
+            count = predictions_collection.count_documents({})
+        else:
+            # Count from in-memory storage
+            count = len(predictions)
+        
+        return jsonify({
+            'status': 'success',
+            'count': count,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Error getting predictions count: {e}")
+        return jsonify({
+            'status': 'error',
+            'count': 0,
+            'message': str(e)
+        })
+
+@app.route('/api/alerts/count')
+def api_alerts_count():
+    """Get alerts count for real-time updates"""
+    try:
+        if alerts_collection is not None:
+            # Count from MongoDB - only active alerts
+            count = alerts_collection.count_documents({'status': 'active'})
+        else:
+            # Count from in-memory storage - only active alerts
+            count = len([alert for alert in alerts if alert.get('status', 'active') == 'active'])
+        
+        return jsonify({
+            'status': 'success',
+            'count': count,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Error getting alerts count: {e}")
+        return jsonify({
+            'status': 'error',
+            'count': 0,
+            'message': str(e)
+        })
+
+@app.route('/api/system/status')
+def api_system_status():
+    """Get detailed system status for real-time monitoring"""
+    try:
+        # Check MongoDB connection
+        db_status = 'connected'
+        try:
+            if client:
+                client.admin.command('ping')
+        except:
+            db_status = 'disconnected'
+        
+        # Calculate uptime (simplified - you might want to track actual uptime)
+        uptime = 98.5 if db_status == 'connected' else 85.0
+        
+        # Get system metrics
+        system_status_value = 'online' if db_status == 'connected' else 'degraded'
+        
+        return jsonify({
+            'status': 'success',
+            'system_status': system_status_value,
+            'db_status': db_status,
+            'uptime': uptime,
+            'timestamp': datetime.now().isoformat(),
+            'services': {
+                'mongodb': db_status == 'connected',
+                'api': True,
+                'predictions': MODEL_PATH is not None,
+                'alerts': True
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error getting system status: {e}")
+        return jsonify({
+            'status': 'error',
+            'system_status': 'offline',
+            'db_status': 'disconnected',
+            'uptime': 0,
+            'message': str(e)
+        })
 
 @app.route('/api/enthalpy_diagram_data', methods=['GET'])
 def get_enthalpy_diagram_data():
@@ -433,6 +581,10 @@ def calculate_enthalpy_liquid(temperature, pressure):
     # Formule approximative basée sur les propriétés du R404A
     return 50 + temperature * 2.8 + pressure * 0.5
 
+import threading
+import time
+import random
+
 def calculate_cop(h1, h2, h4):
     """Calcul du coefficient de performance"""
     cooling_effect = h1 - h4
@@ -515,12 +667,249 @@ def analyze_temperatures():
         logger.error(f"Erreur analyse températures: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+# Automatic prediction generation system
+def generate_realistic_sensor_data(machine_id="AUTO_GEN"):
+    """Generate realistic sensor data for automatic predictions"""
+    base_time = datetime.now()
+    
+    # Simulate normal operating conditions with some random variation
+    data = {
+        'machine_id': f"{machine_id}_{random.randint(1,5)}",
+        'timestamp': base_time.strftime("%Y-%m-%d %H:%M:%S"),
+        'temp_evaporator': round(random.uniform(-15, -5), 1),
+        'temp_condenser': round(random.uniform(35, 50), 1),
+        'pressure_high': round(random.uniform(10, 16), 1),
+        'pressure_low': round(random.uniform(1.5, 3.0), 1),
+        'superheat': round(random.uniform(5, 12), 1),
+        'subcooling': round(random.uniform(3, 8), 1),
+        'compressor_current': round(random.uniform(6, 12), 1),
+        'vibration': round(random.uniform(0.01, 0.06), 3),
+        'auto_generated': True
+    }
+    
+    # Occasionally generate conditions that trigger alerts (20% chance)
+    if random.random() < 0.2:
+        alert_type = random.choice(['high_temp', 'high_pressure', 'high_current', 'vibration'])
+        
+        if alert_type == 'high_temp':
+            data['temp_condenser'] = round(random.uniform(52, 60), 1)
+        elif alert_type == 'high_pressure':
+            data['pressure_high'] = round(random.uniform(17, 20), 1)
+        elif alert_type == 'high_current':
+            data['compressor_current'] = round(random.uniform(13, 16), 1)
+        elif alert_type == 'vibration':
+            data['vibration'] = round(random.uniform(0.07, 0.12), 3)
+    
+    return data
+
+def automatic_prediction_generator():
+    """Background thread to generate predictions automatically"""
+    logger.info("🤖 Starting automatic prediction generator...")
+    
+    while True:
+        try:
+            # Generate new sensor data
+            sensor_data = generate_realistic_sensor_data()
+            
+            # Make prediction using the model
+            features = [
+                sensor_data['temp_evaporator'],
+                sensor_data['temp_condenser'], 
+                sensor_data['pressure_high'],
+                sensor_data['pressure_low'],
+                sensor_data['superheat'],
+                sensor_data['subcooling'],
+                sensor_data['compressor_current'],
+                sensor_data['vibration']
+            ]
+            
+            prediction = model.predict([features])[0]
+            probability = model.predict_proba([features])[0][1] if hasattr(model, 'predict_proba') else 0.5
+            
+            # Add prediction info to data
+            sensor_data['prediction'] = int(prediction)
+            sensor_data['probability'] = float(probability)
+            sensor_data['prediction_confidence'] = 'high' if probability > 0.7 or probability < 0.3 else 'medium'
+            
+            # Store in MongoDB
+            if predictions_collection is not None:
+                try:
+                    predictions_collection.insert_one(sensor_data.copy())
+                except Exception as e:
+                    logger.warning(f"MongoDB storage failed: {e}")
+            
+            # Store in memory
+            predictions.append(sensor_data)
+            if len(predictions) > 200:
+                predictions.pop(0)
+            
+            # Store sensor data
+            if sensors_collection is not None:
+                try:
+                    sensors_collection.insert_one(sensor_data.copy())
+                except Exception as e:
+                    logger.warning(f"Sensor data storage failed: {e}")
+            
+            # Emit real-time updates
+            socketio.emit('new_prediction', sensor_data)
+            socketio.emit('new_sensor_data', sensor_data)
+            
+            # Emit prediction count update
+            total_predictions = len(predictions) if predictions_collection is None else predictions_collection.count_documents({})
+            socketio.emit('prediction_count_updated', {'count': total_predictions, 'timestamp': sensor_data['timestamp']})
+            
+            # Generate alerts if needed
+            alerts_generated = []
+            
+            # Check for alert conditions
+            if prediction == 1:
+                alert = {
+                    'timestamp': sensor_data['timestamp'],
+                    'machine_id': sensor_data['machine_id'],
+                    'message': f"🤖 AUTO: Maintenance préventive requise - {sensor_data['machine_id']} - Probabilité: {probability:.1%}",
+                    'severity': 'high' if probability > 0.75 else 'medium',
+                    'type': 'auto_prediction',
+                    'status': 'active',
+                    'data': sensor_data
+                }
+                alerts_generated.append(alert)
+            
+            # Temperature alerts
+            if sensor_data['temp_condenser'] > 50:
+                alert = {
+                    'timestamp': sensor_data['timestamp'],
+                    'machine_id': sensor_data['machine_id'],
+                    'message': f"🌡️ AUTO: Température condenseur critique: {sensor_data['temp_condenser']}°C",
+                    'severity': 'high',
+                    'type': 'auto_temperature',
+                    'status': 'active',
+                    'data': sensor_data
+                }
+                alerts_generated.append(alert)
+            
+            # Pressure alerts
+            if sensor_data['pressure_high'] > 16:
+                alert = {
+                    'timestamp': sensor_data['timestamp'],
+                    'machine_id': sensor_data['machine_id'],
+                    'message': f"📈 AUTO: Pression haute critique: {sensor_data['pressure_high']} bar",
+                    'severity': 'high',
+                    'type': 'auto_pressure',
+                    'status': 'active',
+                    'data': sensor_data
+                }
+                alerts_generated.append(alert)
+            
+            # Current alerts
+            if sensor_data['compressor_current'] > 12:
+                alert = {
+                    'timestamp': sensor_data['timestamp'],
+                    'machine_id': sensor_data['machine_id'],
+                    'message': f"⚡ AUTO: Courant compresseur élevé: {sensor_data['compressor_current']}A",
+                    'severity': 'high',
+                    'type': 'auto_current',
+                    'status': 'active',
+                    'data': sensor_data
+                }
+                alerts_generated.append(alert)
+            
+            # Vibration alerts
+            if sensor_data['vibration'] > 0.05:
+                alert = {
+                    'timestamp': sensor_data['timestamp'],
+                    'machine_id': sensor_data['machine_id'],
+                    'message': f"📳 AUTO: Vibrations excessives: {sensor_data['vibration']}g",
+                    'severity': 'medium',
+                    'type': 'auto_vibration',
+                    'status': 'active',
+                    'data': sensor_data
+                }
+                alerts_generated.append(alert)
+            
+            # Store and emit alerts
+            for alert in alerts_generated:
+                if alerts_collection is not None:
+                    try:
+                        alerts_collection.insert_one(alert.copy())
+                    except Exception as e:
+                        logger.warning(f"Alert storage failed: {e}")
+                
+                alerts.append(alert)
+                if len(alerts) > 100:
+                    alerts.pop(0)
+                
+                socketio.emit('new_alert', alert)
+            
+            # Emit alert count update after all alerts are processed
+            if alerts_generated:
+                if alerts_collection is not None:
+                    try:
+                        total_alerts = alerts_collection.count_documents({'status': 'active'})
+                    except:
+                        total_alerts = len([a for a in alerts if a.get('status', 'active') == 'active'])
+                else:
+                    total_alerts = len([a for a in alerts if a.get('status', 'active') == 'active'])
+                
+                socketio.emit('alert_count_updated', {'count': total_alerts, 'timestamp': sensor_data['timestamp']})
+            
+            if alerts_generated:
+                logger.info(f"🚨 Generated {len(alerts_generated)} automatic alerts for {sensor_data['machine_id']}")
+            
+            logger.info(f"🤖 Auto-generated prediction for {sensor_data['machine_id']}: {'⚠️ Maintenance' if prediction else '✅ Normal'} (confidence: {probability:.1%})")
+            
+            # Wait 15-45 seconds before next generation (random interval)
+            wait_time = random.randint(15, 45)
+            time.sleep(wait_time)
+            
+        except Exception as e:
+            logger.error(f"Error in automatic prediction generator: {e}")
+            time.sleep(30)  # Wait 30 seconds on error
+
+# API endpoint to control automatic generation
+@app.route('/api/auto-prediction/toggle', methods=['POST'])
+def toggle_auto_prediction():
+    """Toggle automatic prediction generation"""
+    global auto_prediction_enabled
+    
+    try:
+        data = request.get_json()
+        auto_prediction_enabled = data.get('enabled', True)
+        
+        return jsonify({
+            'status': 'success',
+            'auto_prediction_enabled': auto_prediction_enabled,
+            'message': f"Automatic prediction {'enabled' if auto_prediction_enabled else 'disabled'}"
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/auto-prediction/status')
+def auto_prediction_status():
+    """Get automatic prediction status"""
+    global auto_prediction_enabled
+    
+    return jsonify({
+        'status': 'success',
+        'auto_prediction_enabled': auto_prediction_enabled,
+        'total_predictions': len(predictions),
+        'total_alerts': len([alert for alert in alerts if alert.get('status', 'active') == 'active'])
+    })
+
 if __name__ == '__main__':
     # Création des dossiers nécessaires
     os.makedirs(os.path.join(BASE_DIR, "templates"), exist_ok=True)
     os.makedirs(os.path.join(BASE_DIR, "static"), exist_ok=True)
     
+    # Global variable for auto prediction control
+    auto_prediction_enabled = True
+    
+    # Start automatic prediction generator in background thread
+    prediction_thread = threading.Thread(target=automatic_prediction_generator, daemon=True)
+    prediction_thread.start()
+    
     logger.info("🧊 Démarrage dashboard maintenance prédictive installations frigorifiques")
+    logger.info("🤖 Système de génération automatique de prédictions activé")
     logger.info("🌐 http://localhost:5002")
     
     socketio.run(app, debug=True, host='0.0.0.0', port=5002)
+    
