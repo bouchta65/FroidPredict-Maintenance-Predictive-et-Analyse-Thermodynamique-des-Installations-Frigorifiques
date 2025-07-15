@@ -1,0 +1,2 @@
+# Add Flask-CORS to requirements
+flask-cors

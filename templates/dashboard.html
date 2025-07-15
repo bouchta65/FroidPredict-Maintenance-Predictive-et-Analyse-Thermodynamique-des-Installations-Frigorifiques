@@ -143,7 +143,6 @@
                                         {% for pred in predictions %}
                                         <tr>
                                             <td>{{ pred.machine_id }}</td>
-                                            <td>{{ pred.timestamp.split(' ')[1] if ' ' in pred.timestamp else pred.timestamp }}</td>
                                             <td>
                                                 {% if pred.prediction == 0 %}
                                                 <span class="badge bg-success">OK</span>
