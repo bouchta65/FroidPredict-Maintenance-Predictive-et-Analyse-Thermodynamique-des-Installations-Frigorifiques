@@ -667,41 +667,94 @@ def analyze_temperatures():
         logger.error(f"Erreur analyse températures: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-# Automatic prediction generation system
+# Intégration du nouveau système de capteurs réels
+from sensor_system_real import RefrigerationSensors, SensorReading
+
+# Initialisation du système de capteurs réels
+refrigeration_sensors = RefrigerationSensors()
+
+# Modification de la fonction de génération de données
 def generate_realistic_sensor_data(machine_id="AUTO_GEN"):
-    """Generate realistic sensor data for automatic predictions"""
-    base_time = datetime.now()
+    """Generate realistic sensor data using the new real sensor system"""
     
-    # Simulate normal operating conditions with some random variation
+    # 80% chance de conditions normales, 20% anormales
+    is_normal = random.random() < 0.8
+    
+    if is_normal:
+        readings = refrigeration_sensors.generate_normal_readings(machine_id)
+    else:
+        # Conditions anormales aléatoires
+        abnormal_conditions = [
+            "sensor_failure", "calibration_error", "pressure_drop",
+            "incomplete_evaporation", "inefficient_condensation",
+            "misadjusted_expansion_valve", "clogged_filter"
+        ]
+        condition = random.choice(abnormal_conditions)
+        readings = refrigeration_sensors.generate_abnormal_readings(machine_id, condition)
+    
+    # Calcul des paramètres dérivés
+    derived_params = refrigeration_sensors.calculate_derived_parameters(readings)
+    
+    # Conversion vers le format attendu par le système existant
     data = {
-        'machine_id': f"{machine_id}_{random.randint(1,5)}",
-        'timestamp': base_time.strftime("%Y-%m-%d %H:%M:%S"),
-        'temp_evaporator': round(random.uniform(-15, -5), 1),
-        'temp_condenser': round(random.uniform(35, 50), 1),
-        'pressure_high': round(random.uniform(10, 16), 1),
-        'pressure_low': round(random.uniform(1.5, 3.0), 1),
-        'superheat': round(random.uniform(5, 12), 1),
-        'subcooling': round(random.uniform(3, 8), 1),
+        'machine_id': machine_id,
+        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        
+        # Températures (mapping des nouveaux capteurs)
+        'temp_evaporator': readings["temp_evaporation"].value,
+        'temp_condenser': readings["temp_condensation"].value,
+        'temp_aspiration': readings["temp_aspiration"].value,
+        'temp_refoulement': readings["temp_refoulement"].value,
+        'temp_liquid': readings["temp_liquid"].value,
+        'temp_ambient': readings["temp_ambient"].value,
+        
+        # Pressions (mapping des nouveaux capteurs)
+        'pressure_high': readings["pressure_hp"].value,
+        'pressure_low': readings["pressure_bp"].value,
+        'pressure_intermediate': readings["pressure_intermediate"].value,
+        'pressure_differential': readings["pressure_differential"].value,
+        
+        # Paramètres dérivés calculés
+        'superheat': derived_params["superheat_functional"],
+        'subcooling': derived_params["subcooling"],
+        'cop': derived_params["cop"],
+        'pressure_ratio': derived_params["pressure_ratio"],
+        
+        # Enthalpies pour diagramme de Mollier
+        'enthalpy_h1': derived_params["enthalpy_h1"],
+        'enthalpy_h2': derived_params["enthalpy_h2"],
+        'enthalpy_h3': derived_params["enthalpy_h3"],
+        'enthalpy_h4': derived_params["enthalpy_h4"],
+        'enthalpy_h8': derived_params["enthalpy_h8"],
+        'enthalpy_h9': derived_params["enthalpy_h9"],
+        
+        # Effets thermodynamiques
+        'cooling_effect': derived_params["cooling_effect"],
+        'compression_work': derived_params["compression_work"],
+        'heat_rejected': derived_params["heat_rejected"],
+        
+        # Simulation des autres paramètres
         'compressor_current': round(random.uniform(6, 12), 1),
         'vibration': round(random.uniform(0.01, 0.06), 3),
-        'auto_generated': True
-    }
-    
-    # Occasionally generate conditions that trigger alerts (20% chance)
-    if random.random() < 0.2:
-        alert_type = random.choice(['high_temp', 'high_pressure', 'high_current', 'vibration'])
+        'auto_generated': True,
         
-        if alert_type == 'high_temp':
-            data['temp_condenser'] = round(random.uniform(52, 60), 1)
-        elif alert_type == 'high_pressure':
-            data['pressure_high'] = round(random.uniform(17, 20), 1)
-        elif alert_type == 'high_current':
-            data['compressor_current'] = round(random.uniform(13, 16), 1)
-        elif alert_type == 'vibration':
-            data['vibration'] = round(random.uniform(0.07, 0.12), 3)
+        # Statuts des capteurs
+        'sensor_status': {
+            sensor_id: reading.status 
+            for sensor_id, reading in readings.items()
+        },
+        
+        # Conditions détectées
+        'operating_condition': 'normal' if is_normal else condition,
+        'abnormal_sensors': [
+            sensor_id for sensor_id, reading in readings.items() 
+            if reading.status in ['warning', 'critical', 'error']
+        ]
+    }
     
     return data
 
+# Automatic prediction generation system
 def automatic_prediction_generator():
     """Background thread to generate predictions automatically"""
     logger.info("🤖 Starting automatic prediction generator...")
@@ -912,4 +965,3 @@ if __name__ == '__main__':
     logger.info("🌐 http://localhost:5002")
     
     socketio.run(app, debug=True, host='0.0.0.0', port=5002)
-    
