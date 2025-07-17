@@ -4,7 +4,7 @@
     <div class="diagram-header">
       <div class="header-title">
         <h2 class="title-main">Diagramme de Mollier (h-s)</h2>
-        <h3 class="title-sub">Fluide frigorigène Frayo - Analyse thermodynamique</h3>
+        <h3 class="title-sub">Fluide frigorigène R22 - Analyse thermodynamique</h3>
       </div>
       <div class="header-controls">
         <div class="control-group">
@@ -107,24 +107,24 @@
       <div class="info-grid">
         <div class="info-card fluid-props">
           <div class="card-header">
-            <h4 class="card-title">Propriétés du fluide Frayo</h4>
+            <h4 class="card-title">Propriétés du fluide R22</h4>
           </div>
           <div class="card-content">
             <div class="prop-item">
               <span class="prop-label">Température critique :</span>
-              <span class="prop-value">90.0°C</span>
+              <span class="prop-value">96.15°C</span>
             </div>
             <div class="prop-item">
               <span class="prop-label">Pression critique :</span>
-              <span class="prop-value">40.0 bar</span>
+              <span class="prop-value">49.90 bar</span>
             </div>
             <div class="prop-item">
               <span class="prop-label">Masse molaire :</span>
-              <span class="prop-value">102.03 g/mol</span>
+              <span class="prop-value">86.47 g/mol</span>
             </div>
             <div class="prop-item">
               <span class="prop-label">Type :</span>
-              <span class="prop-value">HFC synthétique</span>
+              <span class="prop-value">HCFC (CHClF2)</span>
             </div>
           </div>
         </div>
@@ -254,12 +254,12 @@ const showZones = ref(true)
 const chartRef = ref(null)
 const dataKey = ref(0) // Pour forcer la régénération des données
 
-// Constantes thermodynamiques pour Frayo
-const FRAYO_PROPS = {
-  Tc: 90.0,      // Température critique [°C]
-  Pc: 40.0,      // Pression critique [bar]
-  Mw: 102.03,    // Masse molaire [g/mol]
-  R: 0.08117     // Constante spécifique [kJ/kg·K]
+// Constantes thermodynamiques pour R22
+const R22_PROPS = {
+  Tc: 96.15,     // Température critique [°C]
+  Pc: 49.90,     // Pression critique [bar]
+  Mw: 86.47,     // Masse molaire [g/mol]
+  R: 0.09615     // Constante spécifique [kJ/kg·K]
 }
 
 // Génération des courbes de saturation simplifiées mais précises
@@ -269,7 +269,7 @@ const generateSaturationCurves = () => {
   
   // Plage de température de -40°C à 85°C
   for (let T = -40; T <= 85; T += 2) {
-    const Tr = (T + 273.15) / (FRAYO_PROPS.Tc + 273.15)
+    const Tr = (T + 273.15) / (R22_PROPS.Tc + 273.15)
     
     if (Tr < 0.98 && Tr > 0.5) {
       // Corrélations simplifiées mais réalistes
@@ -495,13 +495,13 @@ const chartData = computed(() => {
   
   // Point critique
   datasets.push({
-    label: 'Point critique Frayo',
+    label: 'Point critique R22',
     data: [{ 
       x: 1.58, 
       y: 310, 
-      T: FRAYO_PROPS.Tc,
-      P: FRAYO_PROPS.Pc,
-      label: `Point critique: Tc=${FRAYO_PROPS.Tc}°C, Pc=${FRAYO_PROPS.Pc} bar`
+      T: R22_PROPS.Tc,
+      P: R22_PROPS.Pc,
+      label: `Point critique: Tc=${R22_PROPS.Tc}°C, Pc=${R22_PROPS.Pc} bar`
     }],
     borderColor: '#000000',
     backgroundColor: '#000000',
@@ -547,7 +547,7 @@ const chartOptions = computed(() => ({
           if (point.dataset.label.includes('Cycle')) {
             return point.raw.label || 'Point du cycle frigorifique'
           } else if (point.dataset.label.includes('critique')) {
-            return 'Point critique du fluide Frayo'
+            return 'Point critique du fluide R22'
           } else if (point.dataset.label.includes('bulle')) {
             return 'Courbe de bulle (liquide saturé)'
           } else if (point.dataset.label.includes('rosée')) {

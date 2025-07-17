@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagramme de Mollier Frayo - Maintenance Prédictive Frigorifique</title>
+    <title>Diagramme de Mollier R22 - Maintenance Prédictive Frigorifique</title>
     <style>
         * {
             margin: 0;
@@ -262,7 +262,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>🧊 Diagramme de Mollier - Fluide Frayo</h1>
+        <h1>🧊 Diagramme de Mollier - Fluide R22</h1>
         <p>Système de refroidissement avec réservoir - Maintenance prédictive</p>
         <div class="nav-buttons">
             <a href="/" class="nav-btn">🏠 Accueil</a>
@@ -276,7 +276,7 @@
     <div class="container">
         <!-- Section Diagramme Principal -->
         <div class="card diagram-section">
-            <h2>📈 Diagramme de Mollier (h-s) pour Frayo</h2>
+            <h2>📈 Diagramme de Mollier (h-s) pour R22</h2>
             <p>Diagramme enthalpie-entropie adapté aux données collectées depuis le réservoir</p>
             
             <div class="controls">
@@ -306,7 +306,7 @@
         <!-- Section Propriétés -->
         <div class="properties-section" id="propertiesSection" style="display: none;">
             <div class="properties-card">
-                <h3>🧊 Propriétés du Fluide Frayo</h3>
+                <h3>🧊 Propriétés du Fluide R22</h3>
                 <div id="fluidProperties">
                     <!-- Contenu généré dynamiquement -->
                 </div>
@@ -367,7 +367,7 @@
                     // Affichage du diagramme
                     container.innerHTML = `
                         <img src="data:image/png;base64,${data.diagram_base64}" 
-                             alt="Diagramme de Mollier Frayo" 
+                             alt="Diagramme de Mollier R22" 
                              class="diagram-image">
                     `;
 
@@ -610,7 +610,7 @@
 
             const link = document.createElement('a');
             link.href = `data:image/png;base64,${currentDiagramData.diagram_base64}`;
-            link.download = 'diagramme_mollier_frayo.png';
+            link.download = 'diagramme_mollier_r22.png';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -641,7 +641,7 @@
 
         // Chargement automatique des propriétés au démarrage
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🧊 Page Diagramme Mollier Frayo chargée');
+            console.log('🧊 Page Diagramme Mollier R22 chargée');
             
             // Message d'accueil
             setTimeout(() => {

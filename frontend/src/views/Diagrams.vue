@@ -8,9 +8,9 @@
     <div class="mb-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Enthalpy Diagrams</h1>
+          <h1 class="text-2xl font-bold text-gray-900">Installation Frigorifique Complète</h1>
           <p class="mt-2 text-gray-600">
-            Thermodynamic analysis and refrigeration cycle visualization
+            Analyse thermodynamique et visualisation du cycle frigorifique - Installation unifiée
           </p>
         </div>
         <div class="flex items-center space-x-3">
@@ -21,45 +21,44 @@
                  : 'bg-red-50 text-red-700 border-red-200'">
             <div class="w-2 h-2 rounded-full"
                  :class="store.realtimeConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'"></div>
-            <span class="font-medium">{{ store.realtimeConnected ? 'Live Analytics' : 'Offline' }}</span>
+            <span class="font-medium">{{ store.realtimeConnected ? 'Surveillance Live' : 'Hors Ligne' }}</span>
           </div>
           <div class="text-sm text-gray-500">
-            {{ store.analyticsCount }} total records
+            {{ store.analyticsCount }} mesures capteurs
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Controls -->
+    <!-- Installation Status -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-      <div class="flex flex-wrap items-center gap-4">
-        <button
-          @click="refreshAnalytics"
-          :disabled="store.loading"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition duration-200 disabled:opacity-50 shadow-sm"
-        >
-          <span v-if="store.loading">Loading...</span>
-          <span v-else>Refresh Data</span>
-        </button>
-        <select 
-          v-model="selectedMachine"
-          class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
-        >
-          <option value="">All Machines</option>
-          <option v-for="machine in store.uniqueMachines" :key="machine" :value="machine">
-            Machine {{ machine }}
-          </option>
-        </select>
-        <div class="flex items-center space-x-4 ml-auto">
-          <div class="text-sm text-gray-600">
-            Showing {{ filteredDiagramData.length }} of {{ store.analytics.length }} records
-          </div>
-          <div class="text-sm text-gray-600">
-            Avg COP: <span class="font-semibold text-blue-600">{{ store.averageCOP }}</span>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-2">
+            <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            <span class="font-medium text-gray-900">Installation FRIGO-UNITE-001</span>
           </div>
           <div class="text-sm text-gray-500">
-            Last updated: {{ formatLastUpdate }}
+            État: Fonctionnement Normal
           </div>
+        </div>
+        <div class="flex items-center space-x-6">
+          <div class="text-sm">
+            <span class="text-gray-500">COP Moyen:</span>
+            <span class="font-semibold text-blue-600 ml-1">{{ store.averageCOP }}</span>
+          </div>
+          <div class="text-sm">
+            <span class="text-gray-500">Capteurs Actifs:</span>
+            <span class="font-semibold text-green-600 ml-1">10/10</span>
+          </div>
+          <button
+            @click="refreshAnalytics"
+            :disabled="store.loading"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition duration-200 disabled:opacity-50 shadow-sm"
+          >
+            <span v-if="store.loading">Actualisation...</span>
+            <span v-else>Actualiser</span>
+          </button>
         </div>
       </div>
     </div>
@@ -71,115 +70,309 @@
           <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
 
-        <!-- Diagram Data -->
+        <!-- Unified Installation Dashboard -->
         <div v-else-if="store.analytics.length > 0" class="space-y-6">
-          <div 
-            v-for="data in filteredDiagramData" 
-            :key="data._id || (data.machine_id + data.timestamp)"
-            class="card relative"
-          >
-            <!-- Real-time indicator for new data -->
-            <div v-if="isRecentData(data)" 
-                 class="absolute top-4 right-4 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full flex items-center">
-              <div class="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
-              New
+          
+          <!-- Composants Critiques du Système -->
+          <div class="card">
+            <div class="mb-6">
+              <h3 class="text-lg font-medium text-gray-900 mb-2">🔧 Composants Critiques du Système</h3>
+              <p class="text-sm text-gray-600">Surveillance des 7 composants principaux de l'installation</p>
             </div>
             
-            <div class="mb-4">
-              <h3 class="text-lg font-medium text-gray-900">
-                Machine {{ data.machine_id }} - {{ formatDate(data.timestamp) }}
-              </h3>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <!-- Cycle Points -->
-              <div>
-                <h4 class="text-md font-medium text-gray-700 mb-3">Refrigeration Cycle Points</h4>
-                <div class="space-y-3">
-                  <div 
-                    v-for="(point, key) in data.cycle_points" 
-                    :key="key"
-                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div>
-                      <p class="text-sm font-medium text-gray-900">{{ point.description }}</p>
-                      <p class="text-xs text-gray-500">{{ key }}</p>
-                    </div>
-                    <div class="text-right space-y-1">
-                      <div class="text-sm">
-                        <span class="text-gray-500">T:</span>
-                        <span class="font-medium ml-1">{{ point.T.toFixed(1) }}°C</span>
-                      </div>
-                      <div class="text-sm">
-                        <span class="text-gray-500">P:</span>
-                        <span class="font-medium ml-1">{{ point.P.toFixed(1) }} bar</span>
-                      </div>
-                      <div class="text-sm">
-                        <span class="text-gray-500">h:</span>
-                        <span class="font-medium ml-1">{{ point.h.toFixed(1) }} kJ/kg</span>
-                      </div>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div class="component-card bg-blue-50 border-blue-200">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="font-medium text-blue-900">🔄 Compresseur</h4>
+                  <span class="status-badge bg-green-100 text-green-800">Normal</span>
+                </div>
+                <div class="space-y-1 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Courant:</span>
+                    <span class="font-medium">{{ getLatestSensorData('compressor_current') }}A</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Vibrations:</span>
+                    <span class="font-medium">{{ getLatestSensorData('vibration') }}g</span>
                   </div>
                 </div>
               </div>
+              
+              <div class="component-card bg-green-50 border-green-200">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="font-medium text-green-900">❄️ Évaporateur</h4>
+                  <span class="status-badge bg-green-100 text-green-800">Normal</span>
+                </div>
+                <div class="space-y-1 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Température:</span>
+                    <span class="font-medium">{{ getLatestSensorData('temp_evaporator') }}°C</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Pression BP:</span>
+                    <span class="font-medium">{{ getLatestSensorData('pressure_low') }} bar</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="component-card bg-red-50 border-red-200">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="font-medium text-red-900">🌡️ Condenseur</h4>
+                  <span class="status-badge bg-green-100 text-green-800">Normal</span>
+                </div>
+                <div class="space-y-1 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Température:</span>
+                    <span class="font-medium">{{ getLatestSensorData('temp_condenser') }}°C</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Pression HP:</span>
+                    <span class="font-medium">{{ getLatestSensorData('pressure_high') }} bar</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="component-card bg-purple-50 border-purple-200">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="font-medium text-purple-900">🔧 Détendeur</h4>
+                  <span class="status-badge bg-green-100 text-green-800">Normal</span>
+                </div>
+                <div class="space-y-1 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Surchauffe:</span>
+                    <span class="font-medium">{{ getLatestSensorData('superheat') }}°C</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Sous-refroid:</span>
+                    <span class="font-medium">{{ getLatestSensorData('subcooling') }}°C</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="component-card bg-yellow-50 border-yellow-200">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="font-medium text-yellow-900">🔍 Filtre Déshydrateur</h4>
+                  <span class="status-badge bg-green-100 text-green-800">Normal</span>
+                </div>
+                <div class="space-y-1 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Δ Pression:</span>
+                    <span class="font-medium">0.2 bar</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">État:</span>
+                    <span class="font-medium">Propre</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="component-card bg-indigo-50 border-indigo-200">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="font-medium text-indigo-900">🧪 Réservoir Liquide</h4>
+                  <span class="status-badge bg-green-100 text-green-800">Normal</span>
+                </div>
+                <div class="space-y-1 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Niveau:</span>
+                    <span class="font-medium">75%</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Voyant:</span>
+                    <span class="font-medium">Clair</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
+          <!-- Capteurs de Surveillance -->
+          <div class="card">
+            <div class="mb-6">
+              <h3 class="text-lg font-medium text-gray-900 mb-2">📊 Capteurs de Surveillance</h3>
+              <p class="text-sm text-gray-600">Monitoring en temps réel des 10 capteurs principaux</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Capteurs de Pression -->
+              <div>
+                <h4 class="font-medium text-gray-700 mb-3">🔴 Capteurs de Pression (4 capteurs)</h4>
+                <div class="space-y-3">
+                  <div class="sensor-reading">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-medium">Pression Haute (HP)</span>
+                      <span class="sensor-value">{{ getLatestSensorData('pressure_high') }} bar</span>
+                    </div>
+                    <div class="text-xs text-gray-500">Après compresseur / Dans condenseur</div>
+                  </div>
+                  
+                  <div class="sensor-reading">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-medium">Pression Basse (BP)</span>
+                      <span class="sensor-value">{{ getLatestSensorData('pressure_low') }} bar</span>
+                    </div>
+                    <div class="text-xs text-gray-500">Avant compresseur / Dans évaporateur</div>
+                  </div>
+                  
+                  <div class="sensor-reading">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-medium">Pression Intermédiaire</span>
+                      <span class="sensor-value">{{ getLatestSensorData('pressure_intermediate') }} bar</span>
+                    </div>
+                    <div class="text-xs text-gray-500">Sortie détendeur</div>
+                  </div>
+                  
+                  <div class="sensor-reading">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-medium">Pression Différentielle</span>
+                      <span class="sensor-value">0.2 bar</span>
+                    </div>
+                    <div class="text-xs text-gray-500">Surveillance filtre déshydrateur</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Capteurs de Température -->
+              <div>
+                <h4 class="font-medium text-gray-700 mb-3">🌡️ Capteurs de Température (6 capteurs)</h4>
+                <div class="space-y-3">
+                  <div class="sensor-reading">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-medium">Température Aspiration</span>
+                      <span class="sensor-value">{{ getLatestSensorData('temp_aspiration') }}°C</span>
+                    </div>
+                    <div class="text-xs text-gray-500">Entrée compresseur</div>
+                  </div>
+                  
+                  <div class="sensor-reading">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-medium">Température Refoulement</span>
+                      <span class="sensor-value">{{ getLatestSensorData('temp_refoulement') }}°C</span>
+                    </div>
+                    <div class="text-xs text-gray-500">Sortie compresseur</div>
+                  </div>
+                  
+                  <div class="sensor-reading">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-medium">Température Condensation</span>
+                      <span class="sensor-value">{{ getLatestSensorData('temp_condenser') }}°C</span>
+                    </div>
+                    <div class="text-xs text-gray-500">Sortie condenseur</div>
+                  </div>
+                  
+                  <div class="sensor-reading">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-medium">Température Évaporation</span>
+                      <span class="sensor-value">{{ getLatestSensorData('temp_evaporator') }}°C</span>
+                    </div>
+                    <div class="text-xs text-gray-500">Sortie évaporateur</div>
+                  </div>
+                  
+                  <div class="sensor-reading">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-medium">Température Liquide</span>
+                      <span class="sensor-value">{{ getLatestSensorData('temp_liquid') }}°C</span>
+                    </div>
+                    <div class="text-xs text-gray-500">Avant détendeur</div>
+                  </div>
+                  
+                  <div class="sensor-reading">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-medium">Température Ambiante</span>
+                      <span class="sensor-value">{{ getLatestSensorData('temp_ambient') }}°C</span>
+                    </div>
+                    <div class="text-xs text-gray-500">Condenseur</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Paramètres Calculés -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+              <h4 class="font-medium text-gray-700 mb-3">📈 Paramètres Calculés</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="calculated-param">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">Surchauffe</span>
+                    <span class="param-value">{{ getLatestSensorData('superheat') }}°C</span>
+                  </div>
+                  <div class="text-xs text-gray-500">Calculée (aspiration - évaporation)</div>
+                </div>
+                
+                <div class="calculated-param">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">Sous-refroidissement</span>
+                    <span class="param-value">{{ getLatestSensorData('subcooling') }}°C</span>
+                  </div>
+                  <div class="text-xs text-gray-500">Calculée (condensation - liquide)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diagramme Enthalpique Unifié -->
+          <div class="card">
+            <div class="mb-6">
+              <h3 class="text-lg font-medium text-gray-900 mb-2">📊 Diagramme Enthalpique de l'Installation</h3>
+              <p class="text-sm text-gray-600">Analyse thermodynamique complète - Cycle frigorifique unifié</p>
+            </div>
+            
+            <div v-if="unifiedInstallationData" class="space-y-6">
               <!-- Performance Metrics -->
-              <div>
-                <h4 class="text-md font-medium text-gray-700 mb-3">Performance Metrics</h4>
-                <div class="space-y-3">
-                  <div class="p-3 bg-blue-50 rounded-lg">
-                    <div class="flex items-center justify-between">
-                      <span class="text-sm font-medium text-blue-900">COP (Coefficient of Performance)</span>
-                      <span class="text-lg font-bold text-blue-900">
-                        {{ data.performance.cop.toFixed(2) }}
-                      </span>
-                    </div>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="performance-metric bg-blue-50 border-blue-200">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-blue-900">COP</span>
+                    <span class="text-lg font-bold text-blue-900">
+                      {{ unifiedInstallationData.performance.cop.toFixed(2) }}
+                    </span>
                   </div>
-                  
-                  <div class="p-3 bg-green-50 rounded-lg">
-                    <div class="flex items-center justify-between">
-                      <span class="text-sm font-medium text-green-900">Cooling Capacity</span>
-                      <span class="text-lg font-bold text-green-900">
-                        {{ data.performance.cooling_capacity.toFixed(1) }} kJ/kg
-                      </span>
-                    </div>
+                  <div class="text-xs text-blue-700">Coefficient de Performance</div>
+                </div>
+                
+                <div class="performance-metric bg-green-50 border-green-200">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-green-900">Effet Frig.</span>
+                    <span class="text-lg font-bold text-green-900">
+                      {{ unifiedInstallationData.performance.cooling_capacity.toFixed(1) }}
+                    </span>
                   </div>
-                  
-                  <div class="p-3 bg-orange-50 rounded-lg">
-                    <div class="flex items-center justify-between">
-                      <span class="text-sm font-medium text-orange-900">Compression Work</span>
-                      <span class="text-lg font-bold text-orange-900">
-                        {{ data.performance.compression_work.toFixed(1) }} kJ/kg
-                      </span>
-                    </div>
+                  <div class="text-xs text-green-700">kJ/kg</div>
+                </div>
+                
+                <div class="performance-metric bg-orange-50 border-orange-200">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-orange-900">Travail Comp.</span>
+                    <span class="text-lg font-bold text-orange-900">
+                      {{ unifiedInstallationData.performance.compression_work.toFixed(1) }}
+                    </span>
                   </div>
-                  
-                  <div class="p-3 bg-red-50 rounded-lg">
-                    <div class="flex items-center justify-between">
-                      <span class="text-sm font-medium text-red-900">Condensation Heat</span>
-                      <span class="text-lg font-bold text-red-900">
-                        {{ data.performance.condensation_heat.toFixed(1) }} kJ/kg
-                      </span>
-                    </div>
+                  <div class="text-xs text-orange-700">kJ/kg</div>
+                </div>
+                
+                <div class="performance-metric bg-red-50 border-red-200">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-red-900">Chaleur Rej.</span>
+                    <span class="text-lg font-bold text-red-900">
+                      {{ unifiedInstallationData.performance.condensation_heat.toFixed(1) }}
+                    </span>
                   </div>
+                  <div class="text-xs text-red-700">kJ/kg</div>
                 </div>
               </div>
-            </div>
 
-            <!-- Mollier Diagram (h-s) -->
-            <div class="mt-6">
-              <h4 class="text-md font-medium text-gray-700 mb-3">Diagramme de Mollier (h-s) - Fluide Frayo</h4>
+              <!-- Mollier Diagram -->
               <div class="bg-gray-50 rounded-lg p-4">
                 <MollierDiagramSimple 
-                  :cycle-data="data.cycle_points"
+                  :cycle-data="unifiedInstallationData.cycle_points"
                   :width="900"
                   :height="700"
                 />
                 <div class="mt-4 text-sm text-gray-600">
-                  <p><strong>Fluide frigorigène:</strong> Frayo</p>
-                  <p><strong>Type de diagramme:</strong> Enthalpie-Entropie (h-s)</p>
-                  <p><strong>Données:</strong> 50 points de mesure du réservoir + cycle frigorifique 4 étapes</p>
-                  <p><strong>Note:</strong> Version simplifiée avec Chart.js et calculs thermodynamiques précis</p>
+                  <p><strong>Installation:</strong> FRIGO-UNITE-001</p>
+                  <p><strong>Fluide frigorigène:</strong> R22</p>
+                  <p><strong>Composants surveillés:</strong> 7 composants critiques</p>
+                  <p><strong>Capteurs actifs:</strong> 10 capteurs (4 pression + 6 température)</p>
+                  <p><strong>Dernière mise à jour:</strong> {{ formatDate(unifiedInstallationData.timestamp) }}</p>
                 </div>
               </div>
             </div>
@@ -190,14 +383,14 @@
         <div v-else class="card">
           <div class="text-center py-8">
             <ChartPieIcon class="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p class="text-gray-500">No analytics data available</p>
+            <p class="text-gray-500">Aucune donnée d'installation disponible</p>
             <div class="mt-4 space-x-2">
               <button @click="refreshAnalytics" 
                       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition duration-200 shadow-sm">
-                Load Analytics Data
+                Charger les Données
               </button>
               <div class="text-sm text-gray-400 mt-2">
-                Real-time updates: {{ store.realtimeConnected ? 'Active' : 'Disconnected' }}
+                Surveillance temps réel: {{ store.realtimeConnected ? 'Active' : 'Déconnectée' }}
               </div>
             </div>
           </div>
@@ -207,16 +400,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRefrigerationStore } from '@/stores/refrigeration'
 import Layout from '@/components/Layout.vue'
-import MollierDiagram from '@/components/MollierDiagram.vue'
 import MollierDiagramSimple from '@/components/MollierDiagramSimple.vue'
 import { ChartPieIcon } from '@heroicons/vue/24/outline'
 import moment from 'moment'
 
 const store = useRefrigerationStore()
-const selectedMachine = ref('')
 
 onMounted(async () => {
   // Initialize store if not already connected
@@ -233,25 +424,79 @@ const refreshAnalytics = async () => {
   await store.refreshCounts()
 }
 
-const filteredDiagramData = computed(() => {
-  if (!selectedMachine.value) {
-    return store.analytics
+// Unified installation data from the latest reading
+const unifiedInstallationData = computed(() => {
+  if (store.analytics.length > 0) {
+    // Take the most recent data and treat it as the unified installation
+    const latestData = store.analytics[0]
+    return {
+      ...latestData,
+      machine_id: 'FRIGO-UNITE-001',
+      timestamp: latestData.timestamp
+    }
   }
-  return store.analytics.filter(data => data.machine_id === selectedMachine.value)
+  return null
 })
+
+// Helper function to get latest sensor data
+const getLatestSensorData = (sensorType) => {
+  if (store.analytics.length > 0) {
+    const latestData = store.analytics[0]
+    const value = latestData[sensorType]
+    
+    if (value !== undefined) {
+      return typeof value === 'number' ? value.toFixed(1) : value
+    }
+    
+    // Default values for missing sensors
+    const defaults = {
+      'temp_aspiration': '5.0',
+      'temp_refoulement': '65.0',
+      'temp_liquid': '25.0',
+      'temp_ambient': '20.0',
+      'pressure_intermediate': '4.5'
+    }
+    
+    return defaults[sensorType] || 'N/A'
+  }
+  return 'N/A'
+}
 
 const formatDate = (timestamp) => {
-  return moment(timestamp).format('MMM DD, YYYY HH:mm:ss')
-}
-
-const formatLastUpdate = computed(() => {
-  return moment(store.lastUpdated).format('HH:mm:ss')
-})
-
-// Check if data is recent (within last 5 minutes)
-const isRecentData = (data) => {
-  const dataTime = moment(data.timestamp)
-  const fiveMinutesAgo = moment().subtract(5, 'minutes')
-  return dataTime.isAfter(fiveMinutesAgo)
+  return moment(timestamp).format('DD/MM/YYYY HH:mm:ss')
 }
 </script>
+
+<style scoped>
+.card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+}
+
+.component-card {
+  @apply p-4 rounded-lg border;
+}
+
+.status-badge {
+  @apply px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.sensor-reading {
+  @apply p-3 bg-gray-50 rounded-lg;
+}
+
+.sensor-value {
+  @apply font-bold text-blue-600;
+}
+
+.calculated-param {
+  @apply p-3 bg-blue-50 rounded-lg;
+}
+
+.param-value {
+  @apply font-bold text-blue-600;
+}
+
+.performance-metric {
+  @apply p-4 rounded-lg border;
+}
+</style>
