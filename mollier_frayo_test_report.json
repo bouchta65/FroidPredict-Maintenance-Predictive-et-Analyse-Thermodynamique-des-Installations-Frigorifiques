@@ -1,54 +1,54 @@
 {
   "test_session": {
-    "timestamp": "2025-07-14T01:34:09.963030",
-    "status": "SUCCESS",
-    "tests_passed": 6,
+    "timestamp": "2025-07-17T19:40:35.633159",
+    "status": "PARTIAL",
+    "tests_passed": 2,
     "total_tests": 6,
-    "duration_ms": 22249,
-    "success_rate": 100.0
+    "duration_ms": 8714,
+    "success_rate": 33.33333333333333
   },
   "test_results": [
     {
       "test": "Fichiers Sortie",
       "status": "PASS",
-      "message": "Tous fichiers présents (47910 bytes)",
-      "timestamp": "2025-07-14T01:33:47.712735",
-      "duration_ms": 2
+      "message": "Tous fichiers présents (61964 bytes)",
+      "timestamp": "2025-07-17T19:40:26.917436",
+      "duration_ms": 1
     },
     {
       "test": "Calculs Thermodynamiques",
       "status": "PASS",
       "message": "Cohérence OK (ΔT=0.00°C)",
-      "timestamp": "2025-07-14T01:33:53.189256",
-      "duration_ms": 5473
+      "timestamp": "2025-07-17T19:40:29.449035",
+      "duration_ms": 2531
     },
     {
       "test": "Génération Locale",
-      "status": "PASS",
-      "message": "Diagramme généré (388643 bytes)",
-      "timestamp": "2025-07-14T01:33:57.782554",
-      "duration_ms": 4592
+      "status": "FAIL",
+      "message": "Erreur: 'MollierDiagramGenerator' object has no attribute 'generate_diagram'",
+      "timestamp": "2025-07-17T19:40:29.449035",
+      "duration_ms": 0
     },
     {
       "test": "Page Web",
-      "status": "PASS",
-      "message": "Page chargée (18438 chars)",
-      "timestamp": "2025-07-14T01:33:59.941443",
-      "duration_ms": 2158
+      "status": "FAIL",
+      "message": "HTTP 404",
+      "timestamp": "2025-07-17T19:40:31.520188",
+      "duration_ms": 2070
     },
     {
       "test": "API Propriétés",
-      "status": "PASS",
-      "message": "Propriétés OK (9 points)",
-      "timestamp": "2025-07-14T01:34:03.652601",
-      "duration_ms": 3709
+      "status": "FAIL",
+      "message": "HTTP 404",
+      "timestamp": "2025-07-17T19:40:33.579404",
+      "duration_ms": 2058
     },
     {
       "test": "API Mollier",
-      "status": "PASS",
-      "message": "API OK (518192 chars base64)",
-      "timestamp": "2025-07-14T01:34:09.948943",
-      "duration_ms": 6287
+      "status": "FAIL",
+      "message": "HTTP 404",
+      "timestamp": "2025-07-17T19:40:35.630123",
+      "duration_ms": 2050
     }
   ]
 }

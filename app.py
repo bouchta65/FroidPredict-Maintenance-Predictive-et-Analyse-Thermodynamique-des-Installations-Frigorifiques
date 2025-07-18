@@ -517,7 +517,7 @@ def get_enthalpy_diagram_data():
         
         diagram_data = []
         for data in recent_data:
-            # Calculs thermodynamiques pour le diagramme enthalpique (R404A)
+            # Calculs thermodynamiques pour le diagramme enthalpique (R22)
             t_evap = data.get('temp_evaporator', -10)
             t_cond = data.get('temp_condenser', 40)
             superheat = data.get('superheat', 8)
@@ -572,14 +572,14 @@ def get_enthalpy_diagram_data():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 def calculate_enthalpy_vapor(temperature, pressure):
-    """Calcul approximatif de l'enthalpie pour la vapeur R404A"""
-    # Formule approximative basée sur les propriétés du R404A
-    return 250 + temperature * 1.2 + pressure * 2.5
+    """Calcul approximatif de l'enthalpie pour la vapeur R22"""
+    # Formule approximative basée sur les propriétés du R22
+    return 250 + temperature * 1.15 + pressure * 2.3
 
 def calculate_enthalpy_liquid(temperature, pressure):
-    """Calcul approximatif de l'enthalpie pour le liquide R404A"""
-    # Formule approximative basée sur les propriétés du R404A
-    return 50 + temperature * 2.8 + pressure * 0.5
+    """Calcul approximatif de l'enthalpie pour le liquide R22"""
+    # Formule approximative basée sur les propriétés du R22
+    return 50 + temperature * 2.6 + pressure * 0.4
 
 import threading
 import time
@@ -667,41 +667,133 @@ def analyze_temperatures():
         logger.error(f"Erreur analyse températures: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-# Automatic prediction generation system
-def generate_realistic_sensor_data(machine_id="AUTO_GEN"):
-    """Generate realistic sensor data for automatic predictions"""
-    base_time = datetime.now()
+# Intégration du nouveau système de capteurs réels
+from sensor_system_real import RefrigerationSensors, SensorReading
+
+# Initialisation du système de capteurs réels
+refrigeration_sensors = RefrigerationSensors()
+
+# Modification de la fonction de génération de données
+def generate_realistic_sensor_data(machine_id="FRIGO-UNITE-001"):
+    """Generate realistic sensor data for unified installation with all critical components"""
     
-    # Simulate normal operating conditions with some random variation
+    # 80% chance of normal conditions, 20% abnormal
+    is_normal = random.random() < 0.8
+    
+    if is_normal:
+        readings = refrigeration_sensors.generate_normal_readings(machine_id)
+    else:
+        # Random abnormal conditions
+        abnormal_conditions = [
+            "sensor_failure", "calibration_error", "pressure_drop",
+            "incomplete_evaporation", "inefficient_condensation",
+            "misadjusted_expansion_valve", "clogged_filter"
+        ]
+        condition = random.choice(abnormal_conditions)
+        readings = refrigeration_sensors.generate_abnormal_readings(machine_id, condition)
+    
+    # Calculating derived parameters
+    derived_params = refrigeration_sensors.calculate_derived_parameters(readings)
+    
+    # Convert to format expected by the existing system
     data = {
-        'machine_id': f"{machine_id}_{random.randint(1,5)}",
-        'timestamp': base_time.strftime("%Y-%m-%d %H:%M:%S"),
-        'temp_evaporator': round(random.uniform(-15, -5), 1),
-        'temp_condenser': round(random.uniform(35, 50), 1),
-        'pressure_high': round(random.uniform(10, 16), 1),
-        'pressure_low': round(random.uniform(1.5, 3.0), 1),
-        'superheat': round(random.uniform(5, 12), 1),
-        'subcooling': round(random.uniform(3, 8), 1),
+        'machine_id': machine_id,
+        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        
+        # Temperatures (mapping from new sensors)
+        'temp_evaporator': readings["temp_evaporation"].value,
+        'temp_condenser': readings["temp_condensation"].value,
+        'temp_aspiration': readings["temp_aspiration"].value,
+        'temp_refoulement': readings["temp_refoulement"].value,
+        'temp_liquid': readings["temp_liquid"].value,
+        'temp_ambient': readings["temp_ambient"].value,
+        
+        # Pressures (mapping from new sensors)
+        'pressure_high': readings["pressure_hp"].value,
+        'pressure_low': readings["pressure_bp"].value,
+        'pressure_intermediate': readings["pressure_intermediate"].value,
+        'pressure_differential': readings["pressure_differential"].value,
+        
+        # Calculated derived parameters
+        'superheat': derived_params["superheat_functional"],
+        'subcooling': derived_params["subcooling"],
+        'cop': derived_params["cop"],
+        'pressure_ratio': derived_params["pressure_ratio"],
+        
+        # Enthalpies for Mollier diagram
+        'enthalpy_h1': derived_params["enthalpy_h1"],
+        'enthalpy_h2': derived_params["enthalpy_h2"],
+        'enthalpy_h3': derived_params["enthalpy_h3"],
+        'enthalpy_h4': derived_params["enthalpy_h4"],
+        'enthalpy_h8': derived_params["enthalpy_h8"],
+        'enthalpy_h9': derived_params["enthalpy_h9"],
+        
+        # Thermodynamic effects
+        'cooling_effect': derived_params["cooling_effect"],
+        'compression_work': derived_params["compression_work"],
+        'heat_rejected': derived_params["heat_rejected"],
+        
+        # Simulation of other parameters
         'compressor_current': round(random.uniform(6, 12), 1),
         'vibration': round(random.uniform(0.01, 0.06), 3),
-        'auto_generated': True
-    }
-    
-    # Occasionally generate conditions that trigger alerts (20% chance)
-    if random.random() < 0.2:
-        alert_type = random.choice(['high_temp', 'high_pressure', 'high_current', 'vibration'])
+        'auto_generated': True,
         
-        if alert_type == 'high_temp':
-            data['temp_condenser'] = round(random.uniform(52, 60), 1)
-        elif alert_type == 'high_pressure':
-            data['pressure_high'] = round(random.uniform(17, 20), 1)
-        elif alert_type == 'high_current':
-            data['compressor_current'] = round(random.uniform(13, 16), 1)
-        elif alert_type == 'vibration':
-            data['vibration'] = round(random.uniform(0.07, 0.12), 3)
+        # Sensor statuses
+        'sensor_status': {
+            sensor_id: reading.status 
+            for sensor_id, reading in readings.items()
+        },
+        
+        # Detected conditions
+        'operating_condition': 'normal' if is_normal else condition,
+        'abnormal_sensors': [
+            sensor_id for sensor_id, reading in readings.items() 
+            if reading.status in ['warning', 'critical', 'error']
+        ],
+        
+        # Monitored critical components
+        'critical_components': {
+            'compressor': {
+                'status': 'normal' if readings["temp_refoulement"].status == 'normal' else 'warning',
+                'current': round(random.uniform(6, 12), 1),
+                'vibration': round(random.uniform(0.01, 0.06), 3)
+            },
+            'evaporator': {
+                'status': 'normal' if readings["temp_evaporation"].status == 'normal' else 'warning',
+                'temperature': readings["temp_evaporation"].value,
+                'pressure': readings["pressure_bp"].value
+            },
+            'condenser': {
+                'status': 'normal' if readings["temp_condensation"].status == 'normal' else 'warning',
+                'temperature': readings["temp_condensation"].value,
+                'pressure': readings["pressure_hp"].value
+            },
+            'expansion_valve': {
+                'status': 'normal' if derived_params["superheat_functional"] > 3 and derived_params["superheat_functional"] < 12 else 'warning',
+                'superheat': derived_params["superheat_functional"],
+                'subcooling': derived_params["subcooling"]
+            },
+            'filter_drier': {
+                'status': 'normal' if readings["pressure_differential"].value < 1.0 else 'warning',
+                'pressure_drop': readings["pressure_differential"].value,
+                'condition': 'clean' if readings["pressure_differential"].value < 0.5 else 'dirty'
+            },
+            'liquid_receiver': {
+                'status': 'normal',
+                'level': round(random.uniform(60, 90), 1),
+                'sight_glass': 'clear' if is_normal else 'bubbles'
+            },
+            'sight_glass': {
+                'status': 'normal',
+                'condition': 'clear' if is_normal else 'bubbles',
+                'moisture_indicator': 'dry' if is_normal else 'wet'
+            }
+        }
+    }
     
     return data
 
+# Automatic prediction generation system
 def automatic_prediction_generator():
     """Background thread to generate predictions automatically"""
     logger.info("🤖 Starting automatic prediction generator...")
@@ -912,4 +1004,3 @@ if __name__ == '__main__':
     logger.info("🌐 http://localhost:5002")
     
     socketio.run(app, debug=True, host='0.0.0.0', port=5002)
-    
