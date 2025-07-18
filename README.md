@@ -1,8 +1,39 @@
 # 🧊 Système de Maintenance Prédictive pour Installations Frigorifiques
 
-> **Un système intelligent de surveillance et de prédiction des défaillances pour les installations frigorifiques et thermodynamiques**
+> **Un système intelligent de surveillance et de prédiction des défaillances pour les installations frigorifiques et thermodynamiques**## 🚀 Démarrage rapide
 
-Ce projet implémente un système de maintenance prédictive en temps réel pour les installations frigorifiques utilisant Apache Kafka pour le streaming de données, Machine Learning pour la prédiction des défaillances, et une interface web Flask pour la visualisation et l'analyse thermodynamique.
+### ⚡ Option 1 : Démarrage automatique (Recommandé)
+
+1. **Ouvrir PowerShell en tant qu'administrateur** dans le dossier du projet
+2. **Vérifier les prérequis** :
+   ```powershell
+   .\check_prerequisites.ps1
+   ```
+3. **Démarrer tous les services** :
+   ```powershell
+   .\run_all_services.ps1
+   ```
+4. **Vérifier le statut des services** :
+   ```powershell
+   .\check_services_status.ps1
+   ```
+5. **Ouvrir votre navigateur** et aller sur : `http://localhost:5002`
+
+### 📊 Option 1.1 : Démarrage avec Module Reports
+
+**Pour tester le nouveau module Reports :**
+
+```powershell
+# Démarrage complet avec interface moderne
+.\start_with_reports.ps1
+```
+
+**Accès** :
+- 🖥️ **Interface principale** : `http://localhost:3000`
+- 📊 **Module Reports** : `http://localhost:3000/reports`
+- 🔧 **API Backend** : `http://localhost:5002`
+
+### 🔧 Option 2 : Démarrage manuel (étape par étape)ente un système de maintenance prédictive en temps réel pour les installations frigorifiques utilisant Apache Kafka pour le streaming de données, Machine Learning pour la prédiction des défaillances, et une interface web Flask pour la visualisation et l'analyse thermodynamique.
 
 ## 🌟 Fonctionnalités clés
 
@@ -10,6 +41,7 @@ Ce projet implémente un système de maintenance prédictive en temps réel pour
 ✅ **Prédiction IA** - Modèles ML pour anticiper les défaillances
 ✅ **Interface moderne** - Dashboard interactif avec mises à jour en temps réel
 ✅ **Alertes intelligentes** - Notifications automatiques basées sur les seuils critiques
+✅ **📊 Module Reports** - Génération et téléchargement de rapports complets
 ✅ **Containerisation** - Déploiement facile avec Docker Compose
 ✅ **Architecture scalable** - Kafka pour le streaming haute performance
 ✅ **Analyse thermodynamique** - Calculs automatiques des indicateurs de performance
@@ -146,7 +178,68 @@ Le système surveille en temps réel les paramètres critiques des installations
     └── static/                         # 🎨 CSS, JS, Images
 ```
 
-## 🚀 Démarrage rapide
+## � Module Reports & Analytics
+
+**🆕 Nouveau module de génération de rapports complets**
+
+Le module Reports offre des capacités avancées de génération et de téléchargement de rapports pour l'analyse approfondie du système de maintenance prédictive.
+
+### 🎯 Types de rapports disponibles
+
+1. **📊 Rapport d'Alertes**
+   - Analyse complète des alertes par gravité
+   - Tendances temporelles et patterns
+   - Formats : PDF, Excel
+
+2. **📈 Rapport de Prédictions**
+   - Analyse de précision des modèles ML
+   - Métriques de performance
+   - Répartition Normal/Défaillance
+
+3. **🎨 Rapport de Diagrammes**
+   - Pack complet de diagrammes de Mollier
+   - Analyse thermodynamique détaillée
+   - Formats : ZIP (diagrammes), PDF (analyse)
+
+4. **⚙️ Rapport Système**
+   - Performance globale du système
+   - Métriques de santé et uptime
+   - Recommandations d'optimisation
+
+5. **🔧 Rapports Personnalisés**
+   - Configuration flexible des sections
+   - Sélection de métriques spécifiques
+   - Export multi-format
+
+6. **⏰ Rapports Programmés**
+   - Génération automatique (quotidien, hebdomadaire, mensuel)
+   - Livraison automatisée
+   - Gestion des planifications
+
+### 🚀 Démarrage avec Reports
+
+```powershell
+# Démarrage avec le module Reports
+.\start_with_reports.ps1
+
+# Ou démarrage manuel
+python app.py                    # Backend avec APIs Reports
+npm run dev                     # Frontend avec interface Reports
+```
+
+**Accès** : `http://localhost:3000/reports`
+
+### 📋 Fonctionnalités Reports
+
+- **📅 Filtrage par date** : Sélection de plages personnalisées
+- **📥 Téléchargements multiples** : PDF, Excel, ZIP
+- **📊 Visualisations** : Graphiques et métriques temps réel
+- **🔍 Historique** : Suivi des rapports générés
+- **⚡ Génération temps réel** : Progression en direct
+
+**Documentation complète** : [`REPORTS_MODULE_GUIDE.md`](REPORTS_MODULE_GUIDE.md)
+
+## �🚀 Démarrage rapide
 
 ### ⚡ Option 1 : Démarrage automatique (Recommandé)
 
