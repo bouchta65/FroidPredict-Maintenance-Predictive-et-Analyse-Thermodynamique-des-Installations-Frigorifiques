@@ -340,6 +340,9 @@
         </div>
       </div>
 
+      <!-- Thermodynamic Charts Generator -->
+      <ThermodynamicCharts class="mb-8" />
+
       <!-- Recent Downloads Section -->
       <div v-if="recentDownloads.length > 0" class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
         <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
@@ -387,6 +390,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRefrigerationStore } from '@/stores/refrigeration'
 import axios from 'axios'
+import ThermodynamicCharts from '@/components/ThermodynamicCharts.vue'
 
 const store = useRefrigerationStore()
 
