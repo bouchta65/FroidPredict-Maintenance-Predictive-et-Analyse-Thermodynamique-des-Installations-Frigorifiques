@@ -1,316 +1,331 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-    <!-- Header Section -->
-    <div class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-              📊 Reports & Analytics
-              <span class="ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                Real-time Data
-              </span>
-            </h1>
-            <p class="mt-2 text-gray-600">Generate and download comprehensive reports for system analysis</p>
-          </div>
-          <div class="flex items-center space-x-4">
-            <div class="text-right">
-              <p class="text-sm font-medium text-gray-900">{{ store?.stats?.total_predictions || 0 }} Predictions</p>
-              <p class="text-sm font-medium text-gray-900">{{ store?.stats?.total_alerts || 0 }} Alerts</p>
+  <div class="flex h-screen bg-gray-100">
+    <!-- Header -->
+    <header class="fixed top-0 left-64 right-0 bg-white shadow-sm z-30 border-b border-gray-200">
+      <div class="flex items-center justify-between px-6 py-4">
+        <div class="flex items-center space-x-4">
+          <h1 class="text-2xl font-bold text-gray-900">📊 Reports & Analytics</h1>
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+            Real-time Data
+          </span>
+        </div>
+        
+        <div class="flex items-center space-x-6">
+          <!-- Stats Display -->
+          <div class="flex items-center space-x-4 text-sm">
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+              <span class="text-gray-600">{{ store?.stats?.total_predictions || 0 }} Predictions</span>
             </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-red-500"></div>
+              <span class="text-gray-600">{{ store?.stats?.total_alerts || 0 }} Alerts</span>
+            </div>
+          </div>
+          
+          <!-- Connection Status -->
+          <div class="flex items-center space-x-2">
             <div class="w-3 h-3 rounded-full" :class="store?.realtimeConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'"></div>
+            <span class="text-sm text-gray-600">{{ store?.realtimeConnected ? 'Connected' : 'Disconnected' }}</span>
           </div>
         </div>
       </div>
-    </div>
+    </header>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Debug Info - Collapsible -->
-      <div class="mb-6">
-        <button 
-          @click="showDebug = !showDebug"
-          class="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          <svg class="w-4 h-4 mr-2 transform transition-transform" :class="{'rotate-90': showDebug}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-          </svg>
-          Debug Information
-        </button>
-        
-        <div v-show="showDebug" class="mt-2 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div>
-              <span class="font-medium text-yellow-800">Store Status:</span>
-              <p class="text-yellow-700">{{ store ? 'Connected' : 'Disconnected' }}</p>
-            </div>
-            <div>
-              <span class="font-medium text-yellow-800">Realtime:</span>
-              <p class="text-yellow-700">{{ store?.realtimeConnected ? 'Active' : 'Inactive' }}</p>
-            </div>
-            <div>
-              <span class="font-medium text-yellow-800">Data Count:</span>
-              <p class="text-yellow-700">{{ filteredAlertsCount }} alerts, {{ filteredPredictionsCount }} predictions</p>
-            </div>
-            <div>
-              <span class="font-medium text-yellow-800">Last Updated:</span>
-              <p class="text-yellow-700">{{ formatTime(store?.lastUpdated) }}</p>
-            </div>
-          </div>
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 pt-20 overflow-y-auto bg-gray-100">
+      <div class="p-6">
+        <!-- Page Description -->
+        <div class="mb-6">
+          <p class="text-gray-600">Generate and download comprehensive reports for system analysis</p>
         </div>
-      </div>
 
-      <!-- Date Range Filter -->
-      <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-8">
-        <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-          📅 Date Range Filter
+        <!-- Debug Info - Collapsible -->
+        <div class="mb-6">
           <button 
-            @click="resetToDefaultRange"
-            class="ml-auto text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-md transition-colors"
+            @click="showDebug = !showDebug"
+            class="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
           >
-            Reset to Default
+            <svg class="w-4 h-4 mr-2 transform transition-transform" :class="{'rotate-90': showDebug}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+            Debug Information
           </button>
-        </h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-            <input 
-              type="datetime-local" 
-              v-model="dateRange.start"
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-          </div>
           
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-            <input 
-              type="datetime-local" 
-              v-model="dateRange.end"
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
+          <div v-show="showDebug" class="mt-2 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span class="font-medium text-yellow-800">Store Status:</span>
+                <p class="text-yellow-700">{{ store ? 'Connected' : 'Disconnected' }}</p>
+              </div>
+              <div>
+                <span class="font-medium text-yellow-800">Realtime:</span>
+                <p class="text-yellow-700">{{ store?.realtimeConnected ? 'Active' : 'Inactive' }}</p>
+              </div>
+              <div>
+                <span class="font-medium text-yellow-800">Data Count:</span>
+                <p class="text-yellow-700">{{ filteredAlertsCount }} alerts, {{ filteredPredictionsCount }} predictions</p>
+              </div>
+              <div>
+                <span class="font-medium text-yellow-800">Last Updated:</span>
+                <p class="text-yellow-700">{{ formatTime(store?.lastUpdated) }}</p>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <!-- Date Range Filter -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+            📅 Date Range Filter
+            <button 
+              @click="resetToDefaultRange"
+              class="ml-auto text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-md transition-colors"
+            >
+              Reset to Default
+            </button>
+          </h2>
           
-          <div class="flex items-end">
-            <button 
-              @click="applyDateFilter"
-              class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center font-medium shadow-lg hover:shadow-xl"
-            >
-              🔍 Apply Filter
-            </button>
-          </div>
-        </div>
-
-        <!-- Quick Date Presets -->
-        <div class="mt-6">
-          <p class="text-sm font-medium text-gray-700 mb-3">Quick Presets:</p>
-          <div class="flex flex-wrap gap-2">
-            <button 
-              v-for="preset in datePresets" 
-              :key="preset.label"
-              @click="applyDatePreset(preset)"
-              class="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-all font-medium border border-gray-200 hover:border-gray-300"
-            >
-              {{ preset.label }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Current Filter Info -->
-        <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p class="text-sm text-blue-800">
-            <span class="font-medium">Active Filter:</span> 
-            {{ formatDateTime(dateRange.start) }} to {{ formatDateTime(dateRange.end) }}
-            <span class="ml-2 text-blue-600">({{ getDateRangeDuration() }})</span>
-          </p>
-        </div>
-      </div>
-
-      <!-- Report Generation Cards -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-8">
-        
-        <!-- Alerts Report -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <div class="p-6">
-            <div class="flex items-center justify-between mb-6">
-              <h3 class="text-xl font-bold text-gray-900 flex items-center">
-                ⚠️ Alerts Report
-              </h3>
-              <div class="flex items-center space-x-2">
-                <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {{ filteredAlertsCount }} alerts
-                </span>
-                <div class="w-2 h-2 rounded-full" :class="filteredAlertsCount > 0 ? 'bg-red-400' : 'bg-green-400'"></div>
-              </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+              <input 
+                type="datetime-local" 
+                v-model="dateRange.start"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
             </div>
             
-            <p class="text-gray-600 mb-6">Generate comprehensive alerts analysis with severity breakdown and trends</p>
-            
-            <!-- Alert Statistics -->
-            <div class="space-y-3 mb-6">
-              <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-                <span class="text-sm font-medium text-red-900">High Severity:</span>
-                <span class="font-bold text-red-700 bg-red-100 px-2 py-1 rounded">{{ alertsSeverityBreakdown.high }}</span>
-              </div>
-              <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
-                <span class="text-sm font-medium text-yellow-900">Medium Severity:</span>
-                <span class="font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded">{{ alertsSeverityBreakdown.medium }}</span>
-              </div>
-              <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                <span class="text-sm font-medium text-green-900">Low Severity:</span>
-                <span class="font-bold text-green-700 bg-green-100 px-2 py-1 rounded">{{ alertsSeverityBreakdown.low }}</span>
-              </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+              <input 
+                type="datetime-local" 
+                v-model="dateRange.end"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
             </div>
             
-            <div class="space-y-3">
+            <div class="flex items-end">
               <button 
-                @click="downloadAlertsReport('pdf')"
-                :disabled="isGenerating.alerts"
-                class="w-full bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-lg hover:from-red-700 hover:to-red-800 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg hover:shadow-xl"
+                @click="applyDateFilter"
+                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center font-medium shadow-lg hover:shadow-xl"
               >
-                <svg v-if="!isGenerating.alerts" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                <div v-else class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                {{ isGenerating.alerts ? 'Generating...' : 'Download PDF Report' }}
+                🔍 Apply Filter
               </button>
+            </div>
+          </div>
+
+          <!-- Quick Date Presets -->
+          <div class="mt-6">
+            <p class="text-sm font-medium text-gray-700 mb-3">Quick Presets:</p>
+            <div class="flex flex-wrap gap-2">
+              <button 
+                v-for="preset in datePresets" 
+                :key="preset.label"
+                @click="applyDatePreset(preset)"
+                class="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-all font-medium border border-gray-200 hover:border-gray-300"
+              >
+                {{ preset.label }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Current Filter Info -->
+          <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p class="text-sm text-blue-800">
+              <span class="font-medium">Active Filter:</span> 
+              {{ formatDateTime(dateRange.start) }} to {{ formatDateTime(dateRange.end) }}
+              <span class="ml-2 text-blue-600">({{ getDateRangeDuration() }})</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Report Generation Cards -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+          
+          <!-- Alerts Report -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                  ⚠️ Alerts Report
+                </h3>
+                <div class="flex items-center space-x-2">
+                  <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
+                    {{ filteredAlertsCount }} alerts
+                  </span>
+                  <div class="w-2 h-2 rounded-full" :class="filteredAlertsCount > 0 ? 'bg-red-400' : 'bg-green-400'"></div>
+                </div>
+              </div>
               
-              <button 
-                @click="downloadAlertsReport('excel')"
-                :disabled="isGenerating.alerts"
-                class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg hover:shadow-xl"
-              >
-                <svg v-if="!isGenerating.alerts" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a4 4 0 01-4 4z"></path>
-                </svg>
-                <div v-else class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                {{ isGenerating.alerts ? 'Generating...' : 'Download Excel Report' }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Predictions Report -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <div class="p-6">
-            <div class="flex items-center justify-between mb-6">
-              <h3 class="text-xl font-bold text-gray-900 flex items-center">
-                📈 Predictions Report
-              </h3>
-              <div class="flex items-center space-x-2">
-                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {{ filteredPredictionsCount }} predictions
-                </span>
-                <div class="w-2 h-2 rounded-full" :class="filteredPredictionsCount > 0 ? 'bg-blue-400' : 'bg-gray-400'"></div>
-              </div>
-            </div>
-            
-            <p class="text-gray-600 mb-6">Analyze prediction accuracy and system performance metrics</p>
-            
-            <!-- Prediction Statistics -->
-            <div class="space-y-3 mb-6">
-              <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                <span class="text-sm font-medium text-green-900">Normal Status:</span>
-                <span class="font-bold text-green-700 bg-green-100 px-2 py-1 rounded">{{ predictionsBreakdown.normal }}</span>
-              </div>
-              <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-                <span class="text-sm font-medium text-red-900">Failure Predictions:</span>
-                <span class="font-bold text-red-700 bg-red-100 px-2 py-1 rounded">{{ predictionsBreakdown.failure }}</span>
-              </div>
-              <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                <span class="text-sm font-medium text-blue-900">Accuracy Rate:</span>
-                <span class="font-bold text-blue-700 bg-blue-100 px-2 py-1 rounded">{{ predictionAccuracy }}%</span>
-              </div>
-            </div>
-            
-            <div class="space-y-3">
-              <button 
-                @click="downloadPredictionsReport('pdf')"
-                :disabled="isGenerating.predictions"
-                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg hover:shadow-xl"
-              >
-                <svg v-if="!isGenerating.predictions" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                <div v-else class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                {{ isGenerating.predictions ? 'Generating...' : 'Download PDF Report' }}
-              </button>
+              <p class="text-gray-600 mb-6">Generate comprehensive alerts analysis with severity breakdown and trends</p>
               
-              <button 
-                @click="downloadPredictionsReport('excel')"
-                :disabled="isGenerating.predictions"
-                class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg hover:shadow-xl"
-              >
-                <svg v-if="!isGenerating.predictions" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a4 4 0 01-4 4z"></path>
-                </svg>
-                <div v-else class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                {{ isGenerating.predictions ? 'Generating...' : 'Download Excel Report' }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- System Performance Report -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <div class="p-6">
-            <div class="flex items-center justify-between mb-6">
-              <h3 class="text-xl font-bold text-gray-900 flex items-center">
-                🖥️ System Performance
-              </h3>
-              <div class="flex items-center space-x-2">
-                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {{ systemHealthScore }}% Health
-                </span>
-                <div class="w-2 h-2 rounded-full" :class="systemHealthScore > 80 ? 'bg-green-400' : systemHealthScore > 60 ? 'bg-yellow-400' : 'bg-red-400'"></div>
+              <!-- Alert Statistics -->
+              <div class="space-y-3 mb-6">
+                <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                  <span class="text-sm font-medium text-red-900">High Severity:</span>
+                  <span class="font-bold text-red-700 bg-red-100 px-2 py-1 rounded">{{ alertsSeverityBreakdown.high }}</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+                  <span class="text-sm font-medium text-yellow-900">Medium Severity:</span>
+                  <span class="font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded">{{ alertsSeverityBreakdown.medium }}</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                  <span class="text-sm font-medium text-green-900">Low Severity:</span>
+                  <span class="font-bold text-green-700 bg-green-100 px-2 py-1 rounded">{{ alertsSeverityBreakdown.low }}</span>
+                </div>
               </div>
-            </div>
-            
-            <p class="text-gray-600 mb-6">Comprehensive system performance and health analysis</p>
-            
-            <!-- System Statistics -->
-            <div class="space-y-3 mb-6">
-              <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                <span class="text-sm font-medium text-green-900">System Uptime:</span>
-                <span class="font-bold text-green-700 bg-green-100 px-2 py-1 rounded">{{ systemUptime }}</span>
-              </div>
-              <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                <span class="text-sm font-medium text-blue-900">Average COP:</span>
-                <span class="font-bold text-blue-700 bg-blue-100 px-2 py-1 rounded">{{ averageCOP }}</span>
-              </div>
-              <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                <span class="text-sm font-medium text-purple-900">Active Machines:</span>
-                <span class="font-bold text-purple-700 bg-purple-100 px-2 py-1 rounded">{{ activeMachinesCount }}</span>
-              </div>
-            </div>
-            
-            <div class="space-y-3">
-              <button 
-                @click="downloadSystemReport('comprehensive')"
-                :disabled="isGenerating.system"
-                class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg hover:shadow-xl"
-              >
-                <svg v-if="!isGenerating.system" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                <div v-else class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                {{ isGenerating.system ? 'Generating...' : 'Comprehensive Report' }}
-              </button>
               
-              <button 
-                @click="downloadSystemReport('summary')"
-                :disabled="isGenerating.system"
-                class="w-full bg-gradient-to-r from-teal-600 to-teal-700 text-white px-6 py-3 rounded-lg hover:from-teal-700 hover:to-teal-800 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg hover:shadow-xl"
-              >
-                <svg v-if="!isGenerating.system" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h2m5 0h2a2 2 0 002-2V7a2 2 0 00-2-2h-2m-5 4v6m0 0l-3-3m3 3l3-3"></path>
-                </svg>
-                <div v-else class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                {{ isGenerating.system ? 'Generating...' : 'Executive Summary' }}
-              </button>
+              <div class="space-y-3">
+                <button 
+                  @click="downloadAlertsReport('pdf')"
+                  :disabled="isGenerating.alerts"
+                  class="w-full bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-lg hover:from-red-700 hover:to-red-800 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm hover:shadow-md"
+                >
+                  <svg v-if="!isGenerating.alerts" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  <div v-else class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  {{ isGenerating.alerts ? 'Generating...' : 'Download PDF Report' }}
+                </button>
+                
+                <button 
+                  @click="downloadAlertsReport('excel')"
+                  :disabled="isGenerating.alerts"
+                  class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm hover:shadow-md"
+                >
+                  <svg v-if="!isGenerating.alerts" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a4 4 0 01-4 4z"></path>
+                  </svg>
+                  <div v-else class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  {{ isGenerating.alerts ? 'Generating...' : 'Download Excel Report' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Predictions Report -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                  📈 Predictions Report
+                </h3>
+                <div class="flex items-center space-x-2">
+                  <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                    {{ filteredPredictionsCount }} predictions
+                  </span>
+                  <div class="w-2 h-2 rounded-full" :class="filteredPredictionsCount > 0 ? 'bg-blue-400' : 'bg-gray-400'"></div>
+                </div>
+              </div>
+              
+              <p class="text-gray-600 mb-6">Analyze prediction accuracy and system performance metrics</p>
+              
+              <!-- Prediction Statistics -->
+              <div class="space-y-3 mb-6">
+                <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                  <span class="text-sm font-medium text-green-900">Normal Status:</span>
+                  <span class="font-bold text-green-700 bg-green-100 px-2 py-1 rounded">{{ predictionsBreakdown.normal }}</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                  <span class="text-sm font-medium text-red-900">Failure Predictions:</span>
+                  <span class="font-bold text-red-700 bg-red-100 px-2 py-1 rounded">{{ predictionsBreakdown.failure }}</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                  <span class="text-sm font-medium text-blue-900">Accuracy Rate:</span>
+                  <span class="font-bold text-blue-700 bg-blue-100 px-2 py-1 rounded">{{ predictionAccuracy }}%</span>
+                </div>
+              </div>
+              
+              <div class="space-y-3">
+                <button 
+                  @click="downloadPredictionsReport('pdf')"
+                  :disabled="isGenerating.predictions"
+                  class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm hover:shadow-md"
+                >
+                  <svg v-if="!isGenerating.predictions" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  <div v-else class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  {{ isGenerating.predictions ? 'Generating...' : 'Download PDF Report' }}
+                </button>
+                
+                <button 
+                  @click="downloadPredictionsReport('excel')"
+                  :disabled="isGenerating.predictions"
+                  class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm hover:shadow-md"
+                >
+                  <svg v-if="!isGenerating.predictions" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a4 4 0 01-4 4z"></path>
+                  </svg>
+                  <div v-else class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  {{ isGenerating.predictions ? 'Generating...' : 'Download Excel Report' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- System Performance Report -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                  🖥️ System Performance
+                </h3>
+                <div class="flex items-center space-x-2">
+                  <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                    {{ systemHealthScore }}% Health
+                  </span>
+                  <div class="w-2 h-2 rounded-full" :class="systemHealthScore > 80 ? 'bg-green-400' : systemHealthScore > 60 ? 'bg-yellow-400' : 'bg-red-400'"></div>
+                </div>
+              </div>
+              
+              <p class="text-gray-600 mb-6">Comprehensive system performance and health analysis</p>
+              
+              <!-- System Statistics -->
+              <div class="space-y-3 mb-6">
+                <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                  <span class="text-sm font-medium text-green-900">System Uptime:</span>
+                  <span class="font-bold text-green-700 bg-green-100 px-2 py-1 rounded">{{ systemUptime }}</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                  <span class="text-sm font-medium text-blue-900">Average COP:</span>
+                  <span class="font-bold text-blue-700 bg-blue-100 px-2 py-1 rounded">{{ averageCOP }}</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                  <span class="text-sm font-medium text-purple-900">Active Machines:</span>
+                  <span class="font-bold text-purple-700 bg-purple-100 px-2 py-1 rounded">{{ activeMachinesCount }}</span>
+                </div>
+              </div>
+              
+              <div class="space-y-3">
+                <button 
+                  @click="downloadSystemReport('comprehensive')"
+                  :disabled="isGenerating.system"
+                  class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm hover:shadow-md"
+                >
+                  <svg v-if="!isGenerating.system" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  <div v-else class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  {{ isGenerating.system ? 'Generating...' : 'Comprehensive Report' }}
+                </button>
+                
+                <button 
+                  @click="downloadSystemReport('summary')"
+                  :disabled="isGenerating.system"
+                  class="w-full bg-gradient-to-r from-teal-600 to-teal-700 text-white px-6 py-3 rounded-lg hover:from-teal-700 hover:to-teal-800 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm hover:shadow-md"
+                >
+                  <svg v-if="!isGenerating.system" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h2m5 0h2a2 2 0 002-2V7a2 2 0 00-2-2h-2m-5 4v6m0 0l-3-3m3 3l3-3"></path>
+                  </svg>
+                  <div v-else class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  {{ isGenerating.system ? 'Generating...' : 'Executive Summary' }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
       <!-- Report Generation Progress -->
       <div 
@@ -340,49 +355,50 @@
         </div>
       </div>
 
-      <!-- Thermodynamic Charts Generator -->
-      <ThermodynamicCharts class="mb-8" />
+        <!-- Thermodynamic Charts Generator -->
+        <ThermodynamicCharts class="mb-6" />
 
-      <!-- Recent Downloads Section -->
-      <div v-if="recentDownloads.length > 0" class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-        <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-          📥 Recent Downloads
-          <span class="ml-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-            {{ recentDownloads.length }}
-          </span>
-        </h2>
-        
-        <div class="space-y-3">
-          <div 
-            v-for="download in recentDownloads.slice(0, 5)" 
-            :key="download.id"
-            class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center" 
-                   :class="download.status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'">
-                <svg v-if="download.status === 'completed'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+        <!-- Recent Downloads Section -->
+        <div v-if="recentDownloads.length > 0" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+            📥 Recent Downloads
+            <span class="ml-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+              {{ recentDownloads.length }}
+            </span>
+          </h2>
+          
+          <div class="space-y-3">
+            <div 
+              v-for="download in recentDownloads.slice(0, 5)" 
+              :key="download.id"
+              class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" 
+                     :class="download.status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'">
+                  <svg v-if="download.status === 'completed'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-900">{{ download.name }}</p>
+                  <p class="text-sm text-gray-500">{{ download.type }} • {{ download.size }}</p>
+                </div>
               </div>
-              <div>
-                <p class="font-medium text-gray-900">{{ download.name }}</p>
-                <p class="text-sm text-gray-500">{{ download.type }} • {{ download.size }}</p>
+              <div class="text-right">
+                <p class="text-sm font-medium" :class="download.status === 'completed' ? 'text-green-600' : 'text-red-600'">
+                  {{ download.status === 'completed' ? 'Completed' : 'Failed' }}
+                </p>
+                <p class="text-xs text-gray-500">{{ formatTime(download.timestamp) }}</p>
               </div>
-            </div>
-            <div class="text-right">
-              <p class="text-sm font-medium" :class="download.status === 'completed' ? 'text-green-600' : 'text-red-600'">
-                {{ download.status === 'completed' ? 'Completed' : 'Failed' }}
-              </p>
-              <p class="text-xs text-gray-500">{{ formatTime(download.timestamp) }}</p>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
@@ -879,24 +895,68 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Enhanced animations and styles */
-.progress-enter-active,
-.progress-leave-active {
-  transition: all 0.3s ease;
+/* Layout styles to match other pages */
+.flex {
+  display: flex;
 }
 
-.progress-enter-from,
-.progress-leave-to {
-  opacity: 0;
-  transform: scale(0.9);
+.h-screen {
+  height: 100vh;
 }
 
-/* Card hover effects */
+.bg-gray-100 {
+  background-color: #f3f4f6;
+}
+
+/* Header styles */
+header {
+  background-color: white;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 30;
+}
+
+/* Main content styles */
+main {
+  flex: 1;
+  margin-left: 16rem; /* 64 * 0.25rem = 16rem for left sidebar */
+  padding-top: 5rem; /* 20 * 0.25rem = 5rem for header height */
+  overflow-y: auto;
+  background-color: #f3f4f6;
+}
+
+/* Card styles */
 .bg-white {
-  transition: all 0.3s ease;
+  background-color: white;
+  transition: all 0.2s ease;
 }
 
-/* Loading animation for buttons */
+.shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.hover\:shadow-md:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Button styles */
+button {
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Animation styles */
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -906,11 +966,32 @@ onMounted(async () => {
   }
 }
 
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 
-/* Custom scrollbar for better UX */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 1024px) {
+  main {
+    margin-left: 0;
+    padding-top: 4rem;
+  }
+  
+  header {
+    left: 0;
+  }
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -928,26 +1009,40 @@ onMounted(async () => {
   background: #94a3b8;
 }
 
-/* Enhanced gradient backgrounds */
-.bg-gradient-to-br {
-  background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 50%, #f3e8ff 100%);
+/* Transition effects */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
 }
 
-/* Button enhancements */
-button {
-  transition: all 0.2s ease;
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
 
-button:active {
-  transform: translateY(1px);
+/* Loading state styles */
+.progress-overlay {
+  backdrop-filter: blur(4px);
 }
 
-/* Enhanced card shadows */
-.shadow-lg {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+/* Grid responsive */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.hover\:shadow-xl:hover {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+@media (min-width: 1024px) {
+  .lg\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .xl\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 </style>
