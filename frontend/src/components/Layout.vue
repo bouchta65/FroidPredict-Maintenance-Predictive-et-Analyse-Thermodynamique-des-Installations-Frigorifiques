@@ -86,7 +86,7 @@ const pageTitle = computed(() => {
     'Test': 'System Test Center',
     'Predictions': 'Prediction Analytics',
     'Alerts': 'System Alerts',
-    'Diagrams': 'Enthalpy Diagrams'
+    'Diagrams': 'Thermodynamic Diagrams & Analytics'
   }
   return titles[route.name] || 'Dashboard'
 })

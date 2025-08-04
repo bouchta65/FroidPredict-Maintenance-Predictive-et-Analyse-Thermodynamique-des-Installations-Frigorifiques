@@ -1076,71 +1076,25 @@ def generate_alerts_report():
             import pandas as pd
             from io import BytesIO
             
-            try:
-                # Convert alerts to DataFrame, handling nested data structures
-                alerts_data = []
-                for alert in alerts:
-                    alert_row = {
-                        'id': str(alert.get('_id', '')),
-                        'timestamp': alert.get('timestamp', ''),
-                        'severity': alert.get('severity', 'unknown'),
-                        'type': alert.get('type', ''),
-                        'message': alert.get('message', ''),
-                        'machine_id': alert.get('machine_id', ''),
-                        'sensor_type': alert.get('sensor_type', ''),
-                        'value': alert.get('value', ''),
-                        'threshold': alert.get('threshold', ''),
-                        'status': alert.get('status', '')
-                    }
-                    
-                    # Handle nested data structure
-                    if 'data' in alert and isinstance(alert['data'], dict):
-                        for key, value in alert['data'].items():
-                            if isinstance(value, (str, int, float)):
-                                alert_row[f'data_{key}'] = value
-                            elif isinstance(value, list):
-                                alert_row[f'data_{key}'] = ', '.join(map(str, value))
-                    
-                    alerts_data.append(alert_row)
+            # Convert alerts to DataFrame
+            df = pd.DataFrame(alerts)
+            
+            buffer = BytesIO()
+            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Alerts', index=False)
                 
-                df = pd.DataFrame(alerts_data)
-                
-                buffer = BytesIO()
-                with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                    # Main alerts data
-                    df.to_excel(writer, sheet_name='Alerts Data', index=False)
-                    
-                    # Add summary sheet
-                    if include_breakdown and report_data.get('severity_breakdown'):
-                        summary_data = []
-                        for severity, count in report_data['severity_breakdown'].items():
-                            summary_data.append({'Severity': severity.title(), 'Count': count})
-                        
-                        summary_df = pd.DataFrame(summary_data)
-                        summary_df.to_excel(writer, sheet_name='Severity Summary', index=False)
-                    
-                    # Add trends sheet if available
-                    if include_trends and report_data.get('daily_trends'):
-                        trends_data = []
-                        for date, count in report_data['daily_trends'].items():
-                            trends_data.append({'Date': date, 'Alert Count': count})
-                        
-                        trends_df = pd.DataFrame(trends_data)
-                        trends_df.to_excel(writer, sheet_name='Daily Trends', index=False)
-                
-                buffer.seek(0)
-                
-                response = make_response(buffer.read())
-                response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                response.headers['Content-Disposition'] = f'attachment; filename=alerts_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
-                response.headers['Content-Length'] = len(buffer.getvalue())
-                
-                logger.info(f"Generated Excel alerts report with {len(alerts_data)} records")
-                return response
-                
-            except Exception as excel_error:
-                logger.error(f"Error generating Excel file: {excel_error}")
-                return jsonify({'status': 'error', 'message': f'Excel generation failed: {str(excel_error)}'}), 500
+                # Add summary sheet
+                if include_breakdown:
+                    summary_df = pd.DataFrame(list(report_data['severity_breakdown'].items()), 
+                                            columns=['Severity', 'Count'])
+                    summary_df.to_excel(writer, sheet_name='Summary', index=False)
+            
+            buffer.seek(0)
+            
+            response = make_response(buffer.read())
+            response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            response.headers['Content-Disposition'] = f'attachment; filename=alerts_report.xlsx'
+            return response
         
         else:
             return jsonify({'status': 'error', 'message': 'Unsupported format'}), 400
@@ -1202,86 +1156,29 @@ def generate_predictions_report():
                 'confidence_rate': round((high_confidence / len(predictions)) * 100, 2) if predictions else 0
             }
         
-        # Add trends analysis
-        if include_trends:
-            # Group predictions by date for trend analysis
-            from collections import defaultdict
-            daily_counts = defaultdict(int)
-            for prediction in predictions:
-                pred_date = prediction.get('timestamp', '')
-                if isinstance(pred_date, str):
-                    date_key = pred_date[:10]  # Extract YYYY-MM-DD
-                    daily_counts[date_key] += 1
-            report_data['daily_trends'] = dict(daily_counts)
-        
         if format_type == 'excel':
             import pandas as pd
             from io import BytesIO
             
-            try:
-                # Convert predictions to DataFrame, handling nested data structures
-                predictions_data = []
-                for prediction in predictions:
-                    pred_row = {
-                        'id': str(prediction.get('_id', '')),
-                        'timestamp': prediction.get('timestamp', ''),
-                        'machine_id': prediction.get('machine_id', ''),
-                        'prediction': prediction.get('prediction', ''),
-                        'probability': prediction.get('probability', ''),
-                        'confidence': prediction.get('confidence', ''),
-                        'status': prediction.get('status', ''),
-                        'model_version': prediction.get('model_version', ''),
-                        'features_used': prediction.get('features_used', '')
-                    }
-                    
-                    # Handle nested data structure
-                    if 'data' in prediction and isinstance(prediction['data'], dict):
-                        for key, value in prediction['data'].items():
-                            if isinstance(value, (str, int, float)):
-                                pred_row[f'data_{key}'] = value
-                            elif isinstance(value, list):
-                                pred_row[f'data_{key}'] = ', '.join(map(str, value))
-                    
-                    predictions_data.append(pred_row)
+            # Convert predictions to DataFrame
+            df = pd.DataFrame(predictions)
+            
+            buffer = BytesIO()
+            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Predictions', index=False)
                 
-                df = pd.DataFrame(predictions_data)
-                
-                buffer = BytesIO()
-                with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                    # Main predictions data
-                    df.to_excel(writer, sheet_name='Predictions Data', index=False)
-                    
-                    # Add analysis sheet
-                    if include_accuracy and report_data.get('accuracy_analysis'):
-                        analysis_data = []
-                        for metric, value in report_data['accuracy_analysis'].items():
-                            analysis_data.append({'Metric': metric.replace('_', ' ').title(), 'Value': value})
-                        
-                        analysis_df = pd.DataFrame(analysis_data)
-                        analysis_df.to_excel(writer, sheet_name='Accuracy Analysis', index=False)
-                    
-                    # Add trends sheet if available
-                    if include_trends and report_data.get('daily_trends'):
-                        trends_data = []
-                        for date, count in report_data['daily_trends'].items():
-                            trends_data.append({'Date': date, 'Prediction Count': count})
-                        
-                        trends_df = pd.DataFrame(trends_data)
-                        trends_df.to_excel(writer, sheet_name='Daily Trends', index=False)
-                
-                buffer.seek(0)
-                
-                response = make_response(buffer.read())
-                response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                response.headers['Content-Disposition'] = f'attachment; filename=predictions_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
-                response.headers['Content-Length'] = len(buffer.getvalue())
-                
-                logger.info(f"Generated Excel predictions report with {len(predictions_data)} records")
-                return response
-                
-            except Exception as excel_error:
-                logger.error(f"Error generating Excel file: {excel_error}")
-                return jsonify({'status': 'error', 'message': f'Excel generation failed: {str(excel_error)}'}), 500
+                # Add analysis sheet
+                if include_accuracy:
+                    analysis_df = pd.DataFrame(list(report_data['accuracy_analysis'].items()), 
+                                             columns=['Metric', 'Value'])
+                    analysis_df.to_excel(writer, sheet_name='Analysis', index=False)
+            
+            buffer.seek(0)
+            
+            response = make_response(buffer.read())
+            response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            response.headers['Content-Disposition'] = f'attachment; filename=predictions_report.xlsx'
+            return response
         
         else:
             # PDF format
@@ -1611,6 +1508,713 @@ RECOMMENDATIONS
 
 End of Analysis Report
 """
+
+# ===============================
+# THERMODYNAMIC CHARTS ENDPOINTS
+# ===============================
+
+@app.route('/api/charts/preview', methods=['POST'])
+def generate_chart_preview():
+    """Generate a preview of thermodynamic chart"""
+    try:
+        data = request.get_json()
+        chart_type = data.get('chartType', 'ph')
+        fluid = data.get('fluid', 'R22')
+        parameters = data.get('parameters', {})
+        options = data.get('options', {})
+        
+        # Generate preview data (simplified)
+        preview_data = {
+            'status': 'success',
+            'chartType': chart_type,
+            'fluid': fluid,
+            'dataPoints': generate_chart_data_points(chart_type, fluid, parameters),
+            'axes': get_chart_axes_info(chart_type, parameters),
+            'metadata': {
+                'generated_at': datetime.now().isoformat(),
+                'parameters': parameters,
+                'options': options
+            }
+        }
+        
+        return jsonify(preview_data)
+        
+    except Exception as e:
+        logger.error(f"Error generating chart preview: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/charts/generate', methods=['POST'])
+def generate_thermodynamic_chart():
+    """Generate full thermodynamic chart in specified format"""
+    try:
+        data = request.get_json()
+        chart_type = data.get('chartType', 'ph')
+        fluid = data.get('fluid', 'R22')
+        parameters = data.get('parameters', {})
+        options = data.get('options', {})
+        format_type = data.get('format', 'svg')
+        quality = data.get('quality', 'high')
+        
+        # Generate chart content based on type
+        if chart_type == 'sp':
+            chart_content = generate_sp_diagram(fluid, parameters, options, format_type, quality)
+        elif chart_type == 'ph':
+            chart_content = generate_ph_diagram(fluid, parameters, options, format_type, quality)
+        elif chart_type == 'pv':
+            chart_content = generate_pv_diagram(fluid, parameters, options, format_type, quality)
+        else:
+            return jsonify({'status': 'error', 'message': 'Invalid chart type'}), 400
+        
+        # Return appropriate response based on format
+        if format_type == 'svg':
+            response = make_response(chart_content)
+            response.headers['Content-Type'] = 'image/svg+xml'
+            response.headers['Content-Disposition'] = f'attachment; filename={chart_type}_{fluid}_diagram.svg'
+        elif format_type == 'png':
+            response = make_response(chart_content)
+            response.headers['Content-Type'] = 'image/png'
+            response.headers['Content-Disposition'] = f'attachment; filename={chart_type}_{fluid}_diagram.png'
+        elif format_type == 'pdf':
+            response = make_response(chart_content)
+            response.headers['Content-Type'] = 'application/pdf'
+            response.headers['Content-Disposition'] = f'attachment; filename={chart_type}_{fluid}_diagram.pdf'
+        else:
+            return jsonify({'status': 'error', 'message': 'Unsupported format'}), 400
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error generating thermodynamic chart: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+def generate_chart_data_points(chart_type, fluid, parameters):
+    """Generate data points for chart visualization"""
+    import numpy as np
+    
+    # Get fluid properties
+    fluid_props = get_fluid_properties(fluid)
+    
+    if chart_type == 'sp':
+        # S-p diagram data points
+        s_range = np.linspace(parameters.get('s_min', 0.8), parameters.get('s_max', 2.2), 100)
+        p_range = np.logspace(np.log10(parameters.get('p_min', 0.1)), np.log10(parameters.get('p_max', 40)), 50)
+        
+        # Generate saturation dome (simplified)
+        s_sat_liquid = np.linspace(fluid_props['s_triple'], fluid_props['s_critical'], 50)
+        s_sat_vapor = np.linspace(fluid_props['s_critical'], fluid_props['s_max'], 50)
+        p_sat = np.linspace(fluid_props['p_triple'], fluid_props['p_critical'], 50)
+        
+        return {
+            'saturation_dome': {
+                'liquid': {'s': s_sat_liquid.tolist(), 'p': p_sat.tolist()},
+                'vapor': {'s': s_sat_vapor.tolist(), 'p': p_sat.tolist()}
+            },
+            'isotherms': generate_isotherms_sp(fluid_props, parameters),
+            'isoenthalps': generate_isoenthalps_sp(fluid_props, parameters),
+            'quality_lines': generate_quality_lines_sp(fluid_props, parameters)
+        }
+    
+    elif chart_type == 'ph':
+        # P-h diagram data points
+        h_range = np.linspace(parameters.get('h_min', 150), parameters.get('h_max', 450), 100)
+        p_range = np.logspace(np.log10(parameters.get('p_min', 0.1)), np.log10(parameters.get('p_max', 40)), 50)
+        
+        return {
+            'saturation_curve': generate_saturation_curve_ph(fluid_props, parameters),
+            'isotherms': generate_isotherms_ph(fluid_props, parameters),
+            'isentropes': generate_isentropes_ph(fluid_props, parameters),
+            'quality_lines': generate_quality_lines_ph(fluid_props, parameters),
+            'isochores': generate_isochores_ph(fluid_props, parameters)
+        }
+    
+    elif chart_type == 'pv':
+        # P-v diagram data points
+        v_range = np.logspace(np.log10(parameters.get('v_min', 0.0001)), np.log10(parameters.get('v_max', 1.0)), 100)
+        p_range = np.logspace(np.log10(parameters.get('p_min', 0.1)), np.log10(parameters.get('p_max', 40)), 50)
+        
+        return {
+            'saturation_dome': generate_saturation_dome_pv(fluid_props, parameters),
+            'isotherms': generate_isotherms_pv(fluid_props, parameters),
+            'isentropes': generate_isentropes_pv(fluid_props, parameters)
+        }
+    
+    return {}
+
+def get_fluid_properties(fluid):
+    """Get thermodynamic properties for specified fluid"""
+    # Simplified fluid properties database
+    properties = {
+        'R22': {
+            'name': 'R22 (Freon-22)',
+            'molar_mass': 86.47,  # g/mol
+            'p_critical': 4.99,   # MPa
+            't_critical': 96.15,  # °C
+            'p_triple': 0.0003,   # MPa
+            't_triple': -157.42,  # °C
+            's_critical': 1.7,    # kJ/(kg·K)
+            's_triple': 0.8,      # kJ/(kg·K)
+            's_max': 2.2,         # kJ/(kg·K)
+            'h_fg_ref': 233.0,    # kJ/kg at reference
+            'temp_range': [-80, 100],  # °C
+            'quality_range': [0.1, 0.9]
+        },
+        'R134a': {
+            'name': 'R134a',
+            'molar_mass': 102.03,
+            'p_critical': 4.06,
+            't_critical': 101.06,
+            'p_triple': 0.0004,
+            't_triple': -103.3,
+            's_critical': 1.6,
+            's_triple': 0.7,
+            's_max': 2.0,
+            'h_fg_ref': 215.0,
+            'temp_range': [-70, 110],
+            'quality_range': [0.1, 0.9]
+        },
+        'R410A': {
+            'name': 'R410A',
+            'molar_mass': 72.58,
+            'p_critical': 4.90,
+            't_critical': 72.13,
+            'p_triple': 0.0005,
+            't_triple': -72.0,
+            's_critical': 1.8,
+            's_triple': 0.9,
+            's_max': 2.1,
+            'h_fg_ref': 263.0,
+            'temp_range': [-60, 80],
+            'quality_range': [0.1, 0.9]
+        },
+        'H2O': {
+            'name': 'Water/Steam',
+            'molar_mass': 18.015,
+            'p_critical': 22.064,
+            't_critical': 373.95,
+            'p_triple': 0.000611,
+            't_triple': 0.01,
+            's_critical': 4.4,
+            's_triple': 0.0,
+            's_max': 10.0,
+            'h_fg_ref': 2257.0,
+            'temp_range': [0, 800],
+            'quality_range': [0.1, 0.9]
+        }
+    }
+    
+    return properties.get(fluid, properties['R22'])
+
+def generate_isotherms_sp(fluid_props, parameters):
+    """Generate isotherms for S-p diagram"""
+    import numpy as np
+    
+    temp_values = np.linspace(fluid_props['temp_range'][0], fluid_props['temp_range'][1], 8)
+    isotherms = []
+    
+    for temp in temp_values:
+        s_line = np.linspace(parameters.get('s_min', 0.8), parameters.get('s_max', 2.2), 50)
+        # Simplified pressure calculation for isotherms
+        p_line = fluid_props['p_critical'] * np.exp(-0.01 * (temp - fluid_props['t_critical'])) * np.ones_like(s_line)
+        
+        isotherms.append({
+            'temperature': round(temp, 1),
+            's': s_line.tolist(),
+            'p': p_line.tolist()
+        })
+    
+    return isotherms
+
+def generate_isoenthalps_sp(fluid_props, parameters):
+    """Generate isoenthalps for S-p diagram"""
+    import numpy as np
+    
+    h_values = np.linspace(150, 450, 6)
+    isoenthalps = []
+    
+    for h in h_values:
+        s_line = np.linspace(parameters.get('s_min', 0.8), parameters.get('s_max', 2.2), 50)
+        # Simplified pressure calculation for isoenthalps
+        p_line = np.linspace(parameters.get('p_min', 0.1), parameters.get('p_max', 40), 50)
+        
+        isoenthalps.append({
+            'enthalpy': round(h, 1),
+            's': s_line.tolist(),
+            'p': p_line.tolist()
+        })
+    
+    return isoenthalps
+
+def generate_quality_lines_sp(fluid_props, parameters):
+    """Generate quality lines for S-p diagram"""
+    import numpy as np
+    
+    quality_lines = []
+    
+    for x in fluid_props['quality_range']:
+        if x <= 1.0:
+            s_line = np.linspace(fluid_props['s_triple'], fluid_props['s_critical'], 30)
+            p_line = np.linspace(fluid_props['p_triple'], fluid_props['p_critical'], 30)
+            
+            quality_lines.append({
+                'quality': x,
+                's': s_line.tolist(),
+                'p': p_line.tolist()
+            })
+    
+    return quality_lines
+
+def generate_saturation_curve_ph(fluid_props, parameters):
+    """Generate saturation curve for p-h diagram"""
+    import numpy as np
+    
+    p_sat = np.linspace(fluid_props['p_triple'], fluid_props['p_critical'], 50)
+    
+    # Simplified enthalpy calculations
+    h_liquid = 200 + 50 * np.log(p_sat / fluid_props['p_triple'])
+    h_vapor = h_liquid + fluid_props['h_fg_ref'] * (1 - p_sat / fluid_props['p_critical'])
+    
+    return {
+        'liquid': {'h': h_liquid.tolist(), 'p': p_sat.tolist()},
+        'vapor': {'h': h_vapor.tolist(), 'p': p_sat.tolist()}
+    }
+
+def generate_isotherms_ph(fluid_props, parameters):
+    """Generate isotherms for p-h diagram"""
+    import numpy as np
+    
+    temp_values = np.linspace(fluid_props['temp_range'][0], fluid_props['temp_range'][1], 8)
+    isotherms = []
+    
+    for temp in temp_values:
+        h_line = np.linspace(parameters.get('h_min', 150), parameters.get('h_max', 450), 50)
+        # Simplified pressure calculation
+        p_line = fluid_props['p_critical'] * np.exp(-0.01 * (temp - fluid_props['t_critical'])) * np.ones_like(h_line)
+        
+        isotherms.append({
+            'temperature': round(temp, 1),
+            'h': h_line.tolist(),
+            'p': p_line.tolist()
+        })
+    
+    return isotherms
+
+def generate_isentropes_ph(fluid_props, parameters):
+    """Generate isentropes for p-h diagram"""
+    import numpy as np
+    
+    s_values = np.linspace(fluid_props['s_triple'], fluid_props['s_max'], 6)
+    isentropes = []
+    
+    for s in s_values:
+        h_line = np.linspace(parameters.get('h_min', 150), parameters.get('h_max', 450), 50)
+        p_line = np.linspace(parameters.get('p_min', 0.1), parameters.get('p_max', 40), 50)
+        
+        isentropes.append({
+            'entropy': round(s, 2),
+            'h': h_line.tolist(),
+            'p': p_line.tolist()
+        })
+    
+    return isentropes
+
+def generate_quality_lines_ph(fluid_props, parameters):
+    """Generate quality lines for p-h diagram"""
+    import numpy as np
+    
+    quality_lines = []
+    
+    for x in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+        p_line = np.linspace(fluid_props['p_triple'], fluid_props['p_critical'], 30)
+        h_line = 200 + x * fluid_props['h_fg_ref'] * (1 - p_line / fluid_props['p_critical'])
+        
+        quality_lines.append({
+            'quality': x,
+            'h': h_line.tolist(),
+            'p': p_line.tolist()
+        })
+    
+    return quality_lines
+
+def generate_isochores_ph(fluid_props, parameters):
+    """Generate constant volume lines for p-h diagram"""
+    import numpy as np
+    
+    v_values = [0.001, 0.01, 0.1, 0.5, 1.0]
+    isochores = []
+    
+    for v in v_values:
+        h_line = np.linspace(parameters.get('h_min', 150), parameters.get('h_max', 450), 50)
+        p_line = np.linspace(parameters.get('p_min', 0.1), parameters.get('p_max', 40), 50)
+        
+        isochores.append({
+            'volume': v,
+            'h': h_line.tolist(),
+            'p': p_line.tolist()
+        })
+    
+    return isochores
+
+def generate_saturation_dome_pv(fluid_props, parameters):
+    """Generate saturation dome for p-v diagram"""
+    import numpy as np
+    
+    p_sat = np.linspace(fluid_props['p_triple'], fluid_props['p_critical'], 50)
+    
+    # Simplified volume calculations
+    v_liquid = 0.001 * (1 + 0.1 * p_sat / fluid_props['p_critical'])
+    v_vapor = 10 * (fluid_props['p_critical'] / p_sat) ** 0.5
+    
+    return {
+        'liquid': {'v': v_liquid.tolist(), 'p': p_sat.tolist()},
+        'vapor': {'v': v_vapor.tolist(), 'p': p_sat.tolist()}
+    }
+
+def generate_isotherms_pv(fluid_props, parameters):
+    """Generate isotherms for p-v diagram"""
+    import numpy as np
+    
+    temp_values = np.linspace(fluid_props['temp_range'][0], fluid_props['temp_range'][1], 8)
+    isotherms = []
+    
+    for temp in temp_values:
+        v_line = np.logspace(np.log10(parameters.get('v_min', 0.0001)), np.log10(parameters.get('v_max', 1.0)), 50)
+        # Ideal gas approximation for isotherms
+        p_line = (temp + 273.15) / v_line  # Simplified
+        
+        isotherms.append({
+            'temperature': round(temp, 1),
+            'v': v_line.tolist(),
+            'p': p_line.tolist()
+        })
+    
+    return isotherms
+
+def generate_isentropes_pv(fluid_props, parameters):
+    """Generate isentropes for p-v diagram"""
+    import numpy as np
+    
+    s_values = np.linspace(fluid_props['s_triple'], fluid_props['s_max'], 6)
+    isentropes = []
+    
+    for s in s_values:
+        v_line = np.logspace(np.log10(parameters.get('v_min', 0.0001)), np.log10(parameters.get('v_max', 1.0)), 50)
+        p_line = np.linspace(parameters.get('p_min', 0.1), parameters.get('p_max', 40), 50)
+        
+        isentropes.append({
+            'entropy': round(s, 2),
+            'v': v_line.tolist(),
+            'p': p_line.tolist()
+        })
+    
+    return isentropes
+
+def get_chart_axes_info(chart_type, parameters):
+    """Get axes information for chart"""
+    axes_info = {
+        'sp': {
+            'x': {'label': 'Entropy [kJ/(kg·K)]', 'min': parameters.get('s_min', 0.8), 'max': parameters.get('s_max', 2.2), 'scale': 'linear'},
+            'y': {'label': 'Pressure [MPa]', 'min': parameters.get('p_min', 0.1), 'max': parameters.get('p_max', 40), 'scale': 'log'}
+        },
+        'ph': {
+            'x': {'label': 'Enthalpy [kJ/kg]', 'min': parameters.get('h_min', 150), 'max': parameters.get('h_max', 450), 'scale': 'linear'},
+            'y': {'label': 'Pressure [MPa]', 'min': parameters.get('p_min', 0.1), 'max': parameters.get('p_max', 40), 'scale': 'log'}
+        },
+        'pv': {
+            'x': {'label': 'Specific Volume [m³/kg]', 'min': parameters.get('v_min', 0.0001), 'max': parameters.get('v_max', 1.0), 'scale': 'log'},
+            'y': {'label': 'Pressure [MPa]', 'min': parameters.get('p_min', 0.1), 'max': parameters.get('p_max', 40), 'scale': 'log'}
+        }
+    }
+    
+    return axes_info.get(chart_type, {})
+
+def generate_sp_diagram(fluid, parameters, options, format_type, quality):
+    """Generate S-p diagram"""
+    # This would use a plotting library like matplotlib to generate the actual chart
+    # For now, return a simple SVG template
+    
+    if format_type == 'svg':
+        return generate_svg_sp_diagram(fluid, parameters, options, quality)
+    elif format_type == 'png':
+        return generate_png_sp_diagram(fluid, parameters, options, quality)
+    elif format_type == 'pdf':
+        return generate_pdf_sp_diagram(fluid, parameters, options, quality)
+
+def generate_ph_diagram(fluid, parameters, options, format_type, quality):
+    """Generate p-h diagram"""
+    
+    if format_type == 'svg':
+        return generate_svg_ph_diagram(fluid, parameters, options, quality)
+    elif format_type == 'png':
+        return generate_png_ph_diagram(fluid, parameters, options, quality)
+    elif format_type == 'pdf':
+        return generate_pdf_ph_diagram(fluid, parameters, options, quality)
+
+def generate_pv_diagram(fluid, parameters, options, format_type, quality):
+    """Generate p-v diagram"""
+    
+    if format_type == 'svg':
+        return generate_svg_pv_diagram(fluid, parameters, options, quality)
+    elif format_type == 'png':
+        return generate_png_pv_diagram(fluid, parameters, options, quality)
+    elif format_type == 'pdf':
+        return generate_pdf_pv_diagram(fluid, parameters, options, quality)
+
+def generate_svg_sp_diagram(fluid, parameters, options, quality):
+    """Generate SVG S-p diagram"""
+    width = 800 if quality == 'standard' else 1600 if quality == 'high' else 3200
+    height = 600 if quality == 'standard' else 1200 if quality == 'high' else 2400
+    
+    svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .axis {{ stroke: #374151; stroke-width: 2; fill: none; }}
+      .grid {{ stroke: #e5e7eb; stroke-width: 0.5; }}
+      .saturation {{ stroke: #3b82f6; stroke-width: 3; fill: none; }}
+      .isotherm {{ stroke: #ef4444; stroke-width: 1.5; fill: none; stroke-dasharray: 5,5; }}
+      .isoenthalp {{ stroke: #10b981; stroke-width: 1.5; fill: none; }}
+      .quality {{ stroke: #6b7280; stroke-width: 1; stroke-dasharray: 3,3; }}
+      .text {{ font-family: Arial, sans-serif; font-size: 12px; fill: #374151; }}
+      .title {{ font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #111827; }}
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="{width}" height="{height}" fill="white"/>
+  
+  <!-- Title -->
+  <text x="{width/2}" y="30" class="title" text-anchor="middle">S-p Diagram for {fluid}</text>
+  
+  <!-- Grid lines -->
+  <g class="grid">
+    <!-- Vertical grid lines -->
+    {generate_grid_lines('vertical', width, height, parameters.get('s_min', 0.8), parameters.get('s_max', 2.2), 'linear')}
+    <!-- Horizontal grid lines -->
+    {generate_grid_lines('horizontal', width, height, parameters.get('p_min', 0.1), parameters.get('p_max', 40), 'log')}
+  </g>
+  
+  <!-- Axes -->
+  <g class="axis">
+    <line x1="80" y1="{height-60}" x2="{width-40}" y2="{height-60}"/>
+    <line x1="80" y1="{height-60}" x2="80" y2="60"/>
+  </g>
+  
+  <!-- Axis labels -->
+  <text x="{width/2}" y="{height-20}" class="text" text-anchor="middle">Entropy [kJ/(kg·K)]</text>
+  <text x="20" y="{height/2}" class="text" text-anchor="middle" transform="rotate(-90 20 {height/2})">Pressure [MPa]</text>
+  
+  <!-- Saturation dome -->
+  <path d="M 150,{height-150} Q {width/2},{height/3} {width-150},{height-150}" class="saturation"/>
+  
+  <!-- Legend -->
+  {generate_legend(width, height) if options.get('showLegend', True) else ''}
+  
+</svg>'''
+    
+    return svg_content.encode('utf-8')
+
+def generate_svg_ph_diagram(fluid, parameters, options, quality):
+    """Generate SVG p-h diagram"""
+    width = 800 if quality == 'standard' else 1600 if quality == 'high' else 3200
+    height = 600 if quality == 'standard' else 1200 if quality == 'high' else 2400
+    
+    svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .axis {{ stroke: #374151; stroke-width: 2; fill: none; }}
+      .grid {{ stroke: #e5e7eb; stroke-width: 0.5; }}
+      .saturation {{ stroke: #3b82f6; stroke-width: 3; fill: rgba(59, 130, 246, 0.1); }}
+      .isotherm {{ stroke: #ef4444; stroke-width: 1.5; fill: none; }}
+      .isentrope {{ stroke: #8b5cf6; stroke-width: 1.5; fill: none; stroke-dasharray: 4,4; }}
+      .quality {{ stroke: #6b7280; stroke-width: 1; stroke-dasharray: 2,2; }}
+      .cycle-point {{ fill: #1f2937; stroke: #374151; stroke-width: 2; }}
+      .text {{ font-family: Arial, sans-serif; font-size: 12px; fill: #374151; }}
+      .title {{ font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #111827; }}
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="{width}" height="{height}" fill="white"/>
+  
+  <!-- Title -->
+  <text x="{width/2}" y="30" class="title" text-anchor="middle">p-h Mollier Diagram for {fluid}</text>
+  
+  <!-- Grid -->
+  <g class="grid">
+    {generate_grid_lines('vertical', width, height, parameters.get('h_min', 150), parameters.get('h_max', 450), 'linear')}
+    {generate_grid_lines('horizontal', width, height, parameters.get('p_min', 0.1), parameters.get('p_max', 40), 'log')}
+  </g>
+  
+  <!-- Axes -->
+  <g class="axis">
+    <line x1="80" y1="{height-60}" x2="{width-40}" y2="{height-60}"/>
+    <line x1="80" y1="{height-60}" x2="80" y2="60"/>
+  </g>
+  
+  <!-- Axis labels -->
+  <text x="{width/2}" y="{height-20}" class="text" text-anchor="middle">Enthalpy [kJ/kg]</text>
+  <text x="20" y="{height/2}" class="text" text-anchor="middle" transform="rotate(-90 20 {height/2})">Pressure [MPa]</text>
+  
+  <!-- Saturation curve -->
+  <path d="M 120,{height-100} C 200,{height-200} {width/2},{height/4} {width-120},{height-300} L {width-120},{height-150} C {width/2},{height/2} 250,{height-180} 120,{height-100} Z" class="saturation"/>
+  
+  <!-- Refrigeration cycle points -->
+  {generate_cycle_points(width, height) if options.get('showCyclePoints', True) else ''}
+  
+  <!-- Legend -->
+  {generate_legend(width, height) if options.get('showLegend', True) else ''}
+  
+</svg>'''
+    
+    return svg_content.encode('utf-8')
+
+def generate_svg_pv_diagram(fluid, parameters, options, quality):
+    """Generate SVG p-v diagram"""
+    width = 800 if quality == 'standard' else 1600 if quality == 'high' else 3200
+    height = 600 if quality == 'standard' else 1200 if quality == 'high' else 2400
+    
+    svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .axis {{ stroke: #374151; stroke-width: 2; fill: none; }}
+      .grid {{ stroke: #e5e7eb; stroke-width: 0.5; }}
+      .saturation {{ stroke: #3b82f6; stroke-width: 3; fill: rgba(59, 130, 246, 0.1); }}
+      .isotherm {{ stroke: #ef4444; stroke-width: 1.5; fill: none; }}
+      .isentrope {{ stroke: #10b981; stroke-width: 1.5; fill: none; stroke-dasharray: 5,5; }}
+      .text {{ font-family: Arial, sans-serif; font-size: 12px; fill: #374151; }}
+      .title {{ font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #111827; }}
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="{width}" height="{height}" fill="white"/>
+  
+  <!-- Title -->
+  <text x="{width/2}" y="30" class="title" text-anchor="middle">p-v Diagram for {fluid}</text>
+  
+  <!-- Grid -->
+  <g class="grid">
+    {generate_grid_lines('vertical', width, height, parameters.get('v_min', 0.0001), parameters.get('v_max', 1.0), 'log')}
+    {generate_grid_lines('horizontal', width, height, parameters.get('p_min', 0.1), parameters.get('p_max', 40), 'log')}
+  </g>
+  
+  <!-- Axes -->
+  <g class="axis">
+    <line x1="80" y1="{height-60}" x2="{width-40}" y2="{height-60}"/>
+    <line x1="80" y1="{height-60}" x2="80" y2="60"/>
+  </g>
+  
+  <!-- Axis labels -->
+  <text x="{width/2}" y="{height-20}" class="text" text-anchor="middle">Specific Volume [m³/kg]</text>
+  <text x="20" y="{height/2}" class="text" text-anchor="middle" transform="rotate(-90 20 {height/2})">Pressure [MPa]</text>
+  
+  <!-- Saturation dome -->
+  <path d="M 120,{height-100} C 150,{height-400} {width/3},{height/3} {width-120},{height-200} L {width-300},{height-150} C {width/2},{height/2} 200,{height-120} 120,{height-100} Z" class="saturation"/>
+  
+  <!-- Legend -->
+  {generate_legend(width, height) if options.get('showLegend', True) else ''}
+  
+</svg>'''
+    
+    return svg_content.encode('utf-8')
+
+def generate_grid_lines(direction, width, height, min_val, max_val, scale):
+    """Generate grid lines for SVG"""
+    lines = []
+    margin_x, margin_y = 80, 60
+    plot_width = width - margin_x - 40
+    plot_height = height - margin_y - 60
+    
+    if direction == 'vertical':
+        if scale == 'linear':
+            for i in range(6):
+                x = margin_x + (i * plot_width / 5)
+                lines.append(f'<line x1="{x}" y1="{margin_y}" x2="{x}" y2="{height-margin_y}"/>')
+        else:  # log scale
+            import math
+            log_min, log_max = math.log10(min_val), math.log10(max_val)
+            for i in range(int(log_max - log_min) + 1):
+                x = margin_x + ((i / (log_max - log_min)) * plot_width)
+                lines.append(f'<line x1="{x}" y1="{margin_y}" x2="{x}" y2="{height-margin_y}"/>')
+    
+    else:  # horizontal
+        if scale == 'linear':
+            for i in range(6):
+                y = margin_y + (i * plot_height / 5)
+                lines.append(f'<line x1="{margin_x}" y1="{y}" x2="{width-40}" y2="{y}"/>')
+        else:  # log scale
+            import math
+            log_min, log_max = math.log10(min_val), math.log10(max_val)
+            for i in range(int(log_max - log_min) + 1):
+                y = height - margin_y - ((i / (log_max - log_min)) * plot_height)
+                lines.append(f'<line x1="{margin_x}" y1="{y}" x2="{width-40}" y2="{y}"/>')
+    
+    return '\n    '.join(lines)
+
+def generate_cycle_points(width, height):
+    """Generate refrigeration cycle points"""
+    points = [
+        {'x': width * 0.3, 'y': height * 0.7, 'label': '1'},
+        {'x': width * 0.4, 'y': height * 0.3, 'label': '2'},
+        {'x': width * 0.7, 'y': height * 0.35, 'label': '3'},
+        {'x': width * 0.6, 'y': height * 0.65, 'label': '4'}
+    ]
+    
+    elements = []
+    for point in points:
+        elements.append(f'<circle cx="{point["x"]}" cy="{point["y"]}" r="4" class="cycle-point"/>')
+        elements.append(f'<text x="{point["x"]+10}" y="{point["y"]+5}" class="text">{point["label"]}</text>')
+    
+    return '\n  '.join(elements)
+
+def generate_legend(width, height):
+    """Generate legend for SVG"""
+    legend_x = width - 200
+    legend_y = 80
+    
+    legend = f'''
+  <g>
+    <rect x="{legend_x-10}" y="{legend_y-10}" width="180" height="120" fill="white" stroke="#e5e7eb" stroke-width="1"/>
+    <text x="{legend_x}" y="{legend_y+5}" class="text" font-weight="bold">Legend</text>
+    <line x1="{legend_x}" y1="{legend_y+15}" x2="{legend_x+30}" y2="{legend_y+15}" class="saturation"/>
+    <text x="{legend_x+35}" y="{legend_y+20}" class="text">Saturation</text>
+    <line x1="{legend_x}" y1="{legend_y+35}" x2="{legend_x+30}" y2="{legend_y+35}" class="isotherm"/>
+    <text x="{legend_x+35}" y="{legend_y+40}" class="text">Isotherms</text>
+    <line x1="{legend_x}" y1="{legend_y+55}" x2="{legend_x+30}" y2="{legend_y+55}" class="isentrope"/>
+    <text x="{legend_x+35}" y="{legend_y+60}" class="text">Isentropes</text>
+    <line x1="{legend_x}" y1="{legend_y+75}" x2="{legend_x+30}" y2="{legend_y+75}" class="quality"/>
+    <text x="{legend_x+35}" y="{legend_y+80}" class="text">Quality lines</text>
+  </g>'''
+    
+    return legend
+
+def generate_png_sp_diagram(fluid, parameters, options, quality):
+    """Generate PNG S-p diagram - placeholder"""
+    # This would use matplotlib or similar to generate actual PNG
+    return b'PNG diagram placeholder'
+
+def generate_pdf_sp_diagram(fluid, parameters, options, quality):
+    """Generate PDF S-p diagram - placeholder"""
+    # This would use reportlab or similar to generate actual PDF
+    return b'PDF diagram placeholder'
+
+def generate_png_ph_diagram(fluid, parameters, options, quality):
+    """Generate PNG p-h diagram - placeholder"""
+    return b'PNG diagram placeholder'
+
+def generate_pdf_ph_diagram(fluid, parameters, options, quality):
+    """Generate PDF p-h diagram - placeholder"""
+    return b'PDF diagram placeholder'
+
+def generate_png_pv_diagram(fluid, parameters, options, quality):
+    """Generate PNG p-v diagram - placeholder"""
+    return b'PNG diagram placeholder'
+
+def generate_pdf_pv_diagram(fluid, parameters, options, quality):
+    """Generate PDF p-v diagram - placeholder"""
+    return b'PDF diagram placeholder'
 
 if __name__ == '__main__':
     # Création des dossiers nécessaires
