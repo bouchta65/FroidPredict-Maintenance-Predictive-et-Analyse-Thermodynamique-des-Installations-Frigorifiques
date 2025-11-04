@@ -1,0 +1,62 @@
+// Configuration file for WiFi and sensor settings
+// Copy this file and rename to config.h, then update with your settings
+
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// ============================================
+// WiFi Configuration
+// ============================================
+// Update these with your WiFi network credentials
+const char* WIFI_SSID = "YOUR_SSID";
+const char* WIFI_PASSWORD = "YOUR_PASSWORD";
+
+// ============================================
+// Web Server Configuration
+// ============================================
+const int WEB_SERVER_PORT = 80;  // HTTP port (default: 80)
+
+// ============================================
+// Sensor Configuration
+// ============================================
+// Enable/disable sensor simulation
+#define USE_SIMULATED_DATA true
+
+// Real sensor pin definitions (if using actual sensors)
+#define TEMP_EVAPORATOR_PIN 34    // Example: DS18B20 sensor
+#define TEMP_CONDENSER_PIN 35     // Example: DS18B20 sensor
+#define PRESSURE_HIGH_PIN 32      // Example: Analog pressure sensor
+#define PRESSURE_LOW_PIN 33       // Example: Analog pressure sensor
+#define CURRENT_SENSOR_PIN 25     // Example: ACS712 current sensor
+#define VIBRATION_SENSOR_PIN 26   // Example: ADXL345 accelerometer
+
+// Sensor calibration values
+#define PRESSURE_HIGH_OFFSET 0.0
+#define PRESSURE_LOW_OFFSET 0.0
+#define CURRENT_OFFSET 0.0
+
+// ============================================
+// Data Update Intervals
+// ============================================
+#define SENSOR_UPDATE_INTERVAL 1000  // Update sensor data every 1 second (ms)
+#define DASHBOARD_REFRESH_RATE 2000  // Dashboard auto-refresh (ms)
+
+// ============================================
+// Integration with Main System
+// ============================================
+// Enable/disable sending data to Python backend
+#define SEND_TO_BACKEND false
+
+// Python backend URL (if enabled)
+const char* BACKEND_URL = "http://192.168.1.100:5002/api/sensor_data";
+
+// Machine ID for identification in the main system
+const int MACHINE_ID = 1;
+
+// ============================================
+// Debug Settings
+// ============================================
+#define DEBUG_MODE true
+#define SERIAL_BAUD_RATE 115200
+
+#endif // CONFIG_H

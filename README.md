@@ -42,6 +42,7 @@
 ✅ **Interface moderne** - Dashboard interactif avec mises à jour en temps réel
 ✅ **Alertes intelligentes** - Notifications automatiques basées sur les seuils critiques
 ✅ **📊 Module Reports** - Génération et téléchargement de rapports complets
+✅ **🔌 Support ESP32/ESP8266** - Serveur web embarqué pour IoT et capteurs réels
 ✅ **Containerisation** - Déploiement facile avec Docker Compose
 ✅ **Architecture scalable** - Kafka pour le streaming haute performance
 ✅ **Analyse thermodynamique** - Calculs automatiques des indicateurs de performance
@@ -87,6 +88,7 @@ Le système surveille en temps réel les paramètres critiques des installations
 - **Tableau de bord interactif** : Visualisation en temps réel des statuts des machines et des lectures de capteurs
 - **Système d'alertes** : Notifications automatiques pour les défaillances potentielles et conditions anormales
 - **Intégration WebSocket** : Mises à jour en direct du tableau de bord sans actualisation de page
+- **Module ESP32/ESP8266** : Serveur web embarqué pour acquisition de données IoT et interface de monitoring dédiée
 - **Containerisation Docker** : Déploiement facile avec Docker Compose
 
 ## 🛠️ Technologies utilisées
@@ -97,6 +99,13 @@ Le système surveille en temps réel les paramètres critiques des installations
 - **Apache Kafka** - Streaming de données en temps réel
 - **MongoDB** - Base de données NoSQL pour stockage
 - **Docker** + **Docker Compose** - Containerisation et orchestration
+
+### IoT & Embedded
+
+- **ESP32/ESP8266** - Microcontrôleurs WiFi pour acquisition de données
+- **Arduino Framework** - Développement embarqué
+- **ESPAsyncWebServer** - Serveur web asynchrone haute performance
+- **Capteurs industriels** - Température, pression, courant, vibration
 
 ### Machine Learning & Données
 
@@ -121,21 +130,29 @@ Le système surveille en temps réel les paramètres critiques des installations
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Capteurs IoT  │───▶│  Kafka Producer │───▶│  Kafka Broker   │
-│  (Simulation)   │    │  (Génération)   │    │  (Streaming)    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                        │
-                                                        ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Dashboard     │◀───│  Flask WebApp   │◀───│ Streaming ML    │
-│  (Interface)    │    │  (API + UI)     │    │  (Prédictions)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │                        │
-                                ▼                        ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │    MongoDB      │    │   Modèles ML    │
-                       │  (Stockage)     │    │ (Entraînement)  │
-                       └─────────────────┘    └─────────────────┘
+│   Capteurs IoT  │───▶│  ESP32/ESP8266  │───▶│  Kafka Producer │
+│   (Réels ou     │    │  - Web Server   │    │  (HTTP/MQTT)    │
+│   Simulation)   │    │  - REST API     │    │                 │
+└─────────────────┘    └─────────────────┘    └────────┬────────┘
+                              │                          │
+                              │ WiFi                     ▼
+                              ▼                   ┌─────────────────┐
+                       ┌─────────────────┐        │  Kafka Broker   │
+                       │  Web Browser    │        │  (Streaming)    │
+                       │  - Dashboard    │        └────────┬────────┘
+                       │  - Monitoring   │                 │
+                       └─────────────────┘                 ▼
+                                                  ┌─────────────────┐
+┌─────────────────┐    ┌─────────────────┐      │ Streaming ML    │
+│   Dashboard     │◀───│  Flask WebApp   │◀─────│  (Prédictions)  │
+│  (Interface)    │    │  (API + UI)     │      └─────────────────┘
+└─────────────────┘    └────────┬────────┘
+                                │
+                                ▼
+                       ┌─────────────────┐      ┌─────────────────┐
+                       │    MongoDB      │      │   Modèles ML    │
+                       │  (Stockage)     │      │ (Entraînement)  │
+                       └─────────────────┘      └─────────────────┘
 ```
 
 ## 📁 Structure du projet
@@ -159,6 +176,13 @@ Le système surveille en temps réel les paramètres critiques des installations
 │       ├── dashboard.html              # 🏠 Tableau de bord principal
 │       ├── alerts.html                 # 🚨 Historique des alertes
 │       └── predictions.html            # 📈 Historique des prédictions
+├── 🔌 **Module ESP32/ESP8266**
+│   └── arduino_esp32_server/
+│       ├── arduino_esp32_server.ino    # 🎯 Sketch Arduino principal
+│       ├── README.md                   # 📖 Documentation ESP32/ESP8266
+│       ├── INTEGRATION_GUIDE.md        # 🔗 Guide d'intégration
+│       ├── platformio.ini              # ⚙️ Configuration PlatformIO
+│       └── config.h.example            # 🔧 Exemple de configuration
 ├── 🐳 **Configuration Docker**
 │   ├── docker-compose.yml              # 🐋 Orchestration des services
 │   └── mongo-init.js                   # 🗄️ Initialisation MongoDB
@@ -239,7 +263,70 @@ npm run dev                     # Frontend avec interface Reports
 
 **Documentation complète** : [`REPORTS_MODULE_GUIDE.md`](REPORTS_MODULE_GUIDE.md)
 
-## �🚀 Démarrage rapide
+## 🔌 Module ESP32/ESP8266 - Acquisition IoT
+
+**🆕 Serveur web embarqué pour acquisition de données en temps réel**
+
+Le module ESP32/ESP8266 permet de collecter des données de capteurs réels et de les afficher via une interface web dédiée. Il peut également envoyer les données au système principal pour analyse et prédiction.
+
+### 🎯 Fonctionnalités
+
+- **📡 Serveur Web WiFi** : Interface web accessible depuis n'importe quel navigateur
+- **🌡️ Acquisition Multi-Capteurs** : Support de multiples types de capteurs
+- **📊 Dashboard Temps Réel** : Interface de monitoring avec auto-rafraîchissement
+- **🔌 API REST** : Endpoints JSON pour intégration facile
+- **📤 Intégration Backend** : Envoi HTTP ou MQTT vers le système Python
+- **⚡ Performance** : Serveur asynchrone haute performance
+
+### 📡 Capteurs supportés
+
+| Type | Description | Interface |
+|------|-------------|-----------|
+| 🌡️ Température | DS18B20, DHT22, BME280 | 1-Wire, I2C |
+| 💨 Pression | Capteurs analogiques | ADC |
+| ⚡ Courant | ACS712, INA219 | Analogique, I2C |
+| 📳 Vibration | ADXL345, MPU6050 | I2C, SPI |
+
+### 🚀 Démarrage Rapide
+
+1. **Configurer WiFi** dans `arduino_esp32_server.ino`:
+   ```cpp
+   const char* ssid = "YOUR_SSID";
+   const char* password = "YOUR_PASSWORD";
+   ```
+
+2. **Téléverser le sketch** via Arduino IDE ou PlatformIO
+
+3. **Accéder au dashboard** : `http://[IP_ESP]/`
+
+4. **API disponibles** :
+   - `GET /api/sensors` - Données de tous les capteurs (JSON)
+   - `GET /api/status` - État du système
+   - `GET /` - Dashboard web complet
+
+### 📖 Documentation
+
+- **Guide complet** : [`arduino_esp32_server/README.md`](arduino_esp32_server/README.md)
+- **Guide d'intégration** : [`arduino_esp32_server/INTEGRATION_GUIDE.md`](arduino_esp32_server/INTEGRATION_GUIDE.md)
+- **Configuration** : [`arduino_esp32_server/config.h.example`](arduino_esp32_server/config.h.example)
+
+### 🔗 Intégration avec le système principal
+
+```cpp
+// Exemple: Envoyer les données au backend Python
+void sendDataToBackend() {
+    HTTPClient http;
+    http.begin("http://192.168.1.100:5002/api/sensor_data");
+    http.addHeader("Content-Type", "application/json");
+    
+    String json = "{\"machine_id\":1, \"temp_evaporator\":" + String(temp) + "...}";
+    http.POST(json);
+}
+```
+
+Voir le guide d'intégration pour plus de détails sur HTTP, MQTT et WebSocket.
+
+## 🚀 Démarrage rapide
 
 ### ⚡ Option 1 : Démarrage automatique (Recommandé)
 
